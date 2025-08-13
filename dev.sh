@@ -105,13 +105,42 @@ case "$1" in
         echo "Building Android APK for target: $TARGET (debug)..."
         echo "Available targets: aarch64 (ARM64), armv7 (ARM32), i686 (x86), x86_64"
         
+        # Clean old builds to ensure fresh APK
+        echo "🧹 Cleaning previous builds..."
+        rm -rf src-tauri/gen/android/app/build/outputs/apk/ 2>/dev/null || true
+        
+        # Record build start time
+        BUILD_START=$(date +%s)
+        
         npm run tauri android build -- --target "$TARGET" --debug
         
         if [ $? -eq 0 ]; then
-            APK_PATH="src-tauri/gen/android/app/build/outputs/apk/$TARGET/debug/app-$TARGET-debug.apk"
-            if [ -f "$APK_PATH" ]; then
-                echo "✅ Build successful! APK created at: $APK_PATH"
+            # Check multiple possible APK locations
+            APK_CANDIDATES=(
+                "src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk"
+                "src-tauri/gen/android/app/build/outputs/apk/$TARGET/debug/app-$TARGET-debug.apk"
+                "src-tauri/gen/android/app/build/outputs/apk/debug/app-debug.apk"
+            )
+            
+            APK_PATH=""
+            for candidate in "${APK_CANDIDATES[@]}"; do
+                if [ -f "$candidate" ]; then
+                    # Check if APK is newer than build start time
+                    APK_TIME=$(stat -c %Y "$candidate" 2>/dev/null || echo "0")
+                    if [ "$APK_TIME" -ge "$BUILD_START" ]; then
+                        APK_PATH="$candidate"
+                        echo "📱 Found fresh APK: $candidate"
+                        break
+                    else
+                        echo "⚠️  Skipping old APK: $candidate (built before this run)"
+                    fi
+                fi
+            done
+            
+            if [ -n "$APK_PATH" ]; then
+                echo "✅ Fresh build successful! APK created at: $APK_PATH"
                 echo "Size: $(du -h "$APK_PATH" | cut -f1)"
+                echo "Built: $(date -d @$(stat -c %Y "$APK_PATH" 2>/dev/null || echo $(date +%s)))"
                 echo ""
                 echo "Next steps:"
                 echo "  ./dev.sh android-install    # Install to connected device"
@@ -119,7 +148,11 @@ case "$1" in
                 echo "  ./dev.sh android-logs-clean # Clear logs buffer" 
                 echo "  ./dev.sh android-logs-native # Monitor native touch logs"
             else
-                echo "❌ Build completed but APK not found at expected location"
+                echo "❌ Build completed but no fresh APK found at expected locations"
+                echo "Available APK files:"
+                find src-tauri/gen/android -name "*.apk" -type f -exec ls -la {} \; 2>/dev/null || echo "None found"
+                echo ""
+                echo "💡 Note: APKs older than this build are ignored to prevent using stale builds"
             fi
         else
             echo "❌ Build failed. Check error messages above."
