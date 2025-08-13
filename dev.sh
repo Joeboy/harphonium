@@ -100,22 +100,83 @@ case "$1" in
             echo "Error: ANDROID_HOME is not set. Please run './dev.sh android-setup' first"
             exit 1
         fi
-        echo "Building Android APK (debug)..."
-        npm run tauri android build --target aarch64 --debug
+        
+        TARGET=${2:-"aarch64"}
+        echo "Building Android APK for target: $TARGET (debug)..."
+        echo "Available targets: aarch64 (ARM64), armv7 (ARM32), i686 (x86), x86_64"
+        
+        npm run tauri android build -- --target "$TARGET" --debug
+        
+        if [ $? -eq 0 ]; then
+            APK_PATH="src-tauri/gen/android/app/build/outputs/apk/$TARGET/debug/app-$TARGET-debug.apk"
+            if [ -f "$APK_PATH" ]; then
+                echo "✅ Build successful! APK created at: $APK_PATH"
+                echo "Size: $(du -h "$APK_PATH" | cut -f1)"
+                echo ""
+                echo "Next steps:"
+                echo "  ./dev.sh android-install    # Install to connected device"
+                echo "  ./dev.sh android-logs       # Monitor app logs"
+            else
+                echo "❌ Build completed but APK not found at expected location"
+            fi
+        else
+            echo "❌ Build failed. Check error messages above."
+        fi
         ;;
     "android-install")
         if [ -z "$ANDROID_HOME" ]; then
             echo "Error: ANDROID_HOME is not set. Please run './dev.sh android-setup' first"
             exit 1
         fi
-        APK_PATH="/home/joe/building/synthmob/src-tauri/gen/android/app/build/outputs/apk/aarch64/debug/app-aarch64-debug.apk"
-        if [ -f "$APK_PATH" ]; then
-            echo "Installing APK to connected device..."
-            $ANDROID_HOME/platform-tools/adb install -r "$APK_PATH"
-        else
-            echo "APK not found at $APK_PATH"
-            echo "Run './dev.sh android-build' first"
+        
+        # Check if device is connected
+        DEVICE_COUNT=$($ANDROID_HOME/platform-tools/adb devices | grep -v "List of devices" | grep -v "^$" | wc -l)
+        if [ "$DEVICE_COUNT" -eq 0 ]; then
+            echo "❌ No Android device detected. Please connect your device and enable USB debugging."
+            echo "Run './dev.sh android-status' to check device connection."
             exit 1
+        fi
+        
+        # Look for available APK files
+        APK_PATTERN="src-tauri/gen/android/app/build/outputs/apk/*/debug/app-*-debug.apk"
+        APK_FILES=($(ls $APK_PATTERN 2>/dev/null))
+        
+        if [ ${#APK_FILES[@]} -eq 0 ]; then
+            echo "❌ No APK files found. Please build first with:"
+            echo "  ./dev.sh android-build"
+            exit 1
+        elif [ ${#APK_FILES[@]} -eq 1 ]; then
+            APK_PATH="${APK_FILES[0]}"
+        else
+            echo "Multiple APK files found. Select one:"
+            for i in "${!APK_FILES[@]}"; do
+                echo "  $((i+1))) $(basename "${APK_FILES[i]}")"
+            done
+            read -p "Enter choice (1-${#APK_FILES[@]}): " choice
+            if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#APK_FILES[@]}" ]; then
+                APK_PATH="${APK_FILES[$((choice-1))]}"
+            else
+                echo "Invalid choice. Exiting."
+                exit 1
+            fi
+        fi
+        
+        echo "Installing APK: $(basename "$APK_PATH")"
+        echo "Size: $(du -h "$APK_PATH" | cut -f1)"
+        echo "Installing to:"
+        $ANDROID_HOME/platform-tools/adb devices
+        
+        if $ANDROID_HOME/platform-tools/adb install -r "$APK_PATH"; then
+            echo "✅ Installation successful!"
+            echo ""
+            echo "Next steps:"
+            echo "  ./dev.sh android-logs       # Monitor app logs"
+            echo "  # Launch app manually on device, or:"
+            echo "  adb shell am start -n uk.co.joebutton.synthmob/.MainActivity"
+        else
+            echo "❌ Installation failed. Try:"
+            echo "  adb uninstall uk.co.joebutton.synthmob"
+            echo "  ./dev.sh android-install"
         fi
         ;;
     "android-logs")
@@ -142,6 +203,99 @@ case "$1" in
         echo "Available AVDs:"
         $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd -c
         ;;
+    "android-device-test")
+        if [ -z "$ANDROID_HOME" ]; then
+            echo "Error: ANDROID_HOME is not set. Please run './dev.sh android-setup' first"
+            exit 1
+        fi
+        echo "🔧 Real Android Device Testing Workflow"
+        echo "======================================="
+        echo ""
+        echo "Step 1: Check device connection..."
+        DEVICE_COUNT=$($ANDROID_HOME/platform-tools/adb devices | grep -v "List of devices" | grep -v "^$" | wc -l)
+        if [ "$DEVICE_COUNT" -eq 0 ]; then
+            echo "❌ No device detected. Please:"
+            echo "  1. Connect Android device via USB"
+            echo "  2. Enable Developer Options (tap Build Number 7 times)"
+            echo "  3. Enable USB Debugging in Developer Options"
+            echo "  4. Allow debugging when prompted on device"
+            exit 1
+        else
+            echo "✅ Device(s) detected:"
+            $ANDROID_HOME/platform-tools/adb devices
+        fi
+        echo ""
+        
+        echo "Step 2: Building APK for real device..."
+        npm run tauri android build -- --target aarch64 --debug
+        
+        if [ $? -eq 0 ]; then
+            echo "✅ Build successful!"
+        else
+            echo "❌ Build failed. Please fix build errors and try again."
+            exit 1
+        fi
+        echo ""
+        
+        echo "Step 3: Installing APK to device..."
+        
+        # Look for available APK files in order of preference
+        APK_CANDIDATES=(
+            "src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk"
+            "src-tauri/gen/android/app/build/outputs/apk/aarch64/debug/app-aarch64-debug.apk"
+            "src-tauri/gen/android/app/build/outputs/apk/armv7/debug/app-armv7-debug.apk"
+            "src-tauri/gen/android/app/build/outputs/apk/x86_64/debug/app-x86_64-debug.apk"
+        )
+        
+        APK_PATH=""
+        for candidate in "${APK_CANDIDATES[@]}"; do
+            if [ -f "$candidate" ]; then
+                APK_PATH="$candidate"
+                echo "Found APK: $(basename "$APK_PATH")"
+                echo "Size: $(du -h "$APK_PATH" | cut -f1)"
+                break
+            fi
+        done
+        
+        if [ -z "$APK_PATH" ]; then
+            echo "❌ No APK found. Available APK files:"
+            find src-tauri/gen/android -name "*.apk" -type f 2>/dev/null || echo "None found"
+            exit 1
+        fi
+        
+        if $ANDROID_HOME/platform-tools/adb install -r "$APK_PATH"; then
+            echo "✅ Installation successful!"
+        else
+            echo "❌ Installation failed"
+            exit 1
+        fi
+        echo ""
+        
+        echo "Step 4: Launching app..."
+        $ANDROID_HOME/platform-tools/adb shell am start -n uk.co.joebutton.synthmob/.MainActivity
+        echo "✅ App launched on device"
+        echo ""
+        
+        echo "🎵 AUDIO TESTING CHECKLIST:"
+        echo "=========================="
+        echo "□ App appears on device screen"
+        echo "□ Frequency input field works"
+        echo "□ Play Note button is responsive"
+        echo "□ **ACTUAL SOUND** comes from device speakers/headphones"
+        echo "□ Different frequencies produce different pitches"
+        echo "□ Stop functionality works"
+        echo "□ No crashes or freezing"
+        echo ""
+        echo "📱 Test different frequencies:"
+        echo "   220 Hz (low tone)"
+        echo "   440 Hz (middle A)"
+        echo "   880 Hz (high tone)"
+        echo ""
+        echo "📋 Monitoring logs in separate terminal:"
+        echo "   ./dev.sh android-logs"
+        echo ""
+        echo "See TESTING_REAL_DEVICE.md for complete testing guide."
+        ;;
     "clean")
         echo "Cleaning build artifacts..."
         cd src-tauri && cargo clean && cd ..
@@ -152,7 +306,7 @@ case "$1" in
     *)
         echo "SynthMob Development Helper"
         echo ""
-        echo "Usage: $0 {dev|dev-external|dev-frontend|build|build-release|android-setup|android-dev|android-emulator|android-build|android-install|android-logs|android-status|clean}"
+        echo "Usage: $0 {dev|dev-external|dev-frontend|build|build-release|android-setup|android-dev|android-emulator|android-build|android-install|android-device-test|android-logs|android-status|clean}"
         echo ""
         echo "Desktop Commands:"
         echo "  dev           - Start development server (desktop)"
@@ -162,13 +316,14 @@ case "$1" in
         echo "  build-release - Build release version (may avoid runtime issues)"
         echo ""
         echo "Android Commands:"
-        echo "  android-setup    - Show Android development setup instructions"
-        echo "  android-emulator - Start Android emulator"
-        echo "  android-dev      - Start Android development (auto-starts emulator)"
-        echo "  android-build    - Build Android APK (debug)"
-        echo "  android-install  - Install built APK to device"
-        echo "  android-logs     - Show real-time Android app logs"
-        echo "  android-status   - Show Android development status"
+        echo "  android-setup       - Show Android development setup instructions"
+        echo "  android-emulator    - Start Android emulator"
+        echo "  android-dev         - Start Android development (auto-starts emulator)"
+        echo "  android-build       - Build Android APK (debug)"
+        echo "  android-install     - Install built APK to device"
+        echo "  android-device-test - Complete real device testing workflow"
+        echo "  android-logs        - Show real-time Android app logs"
+        echo "  android-status      - Show Android development status"
         echo ""
         echo "Utility Commands:"
         echo "  clean         - Clean build artifacts"

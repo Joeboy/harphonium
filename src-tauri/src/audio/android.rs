@@ -7,48 +7,67 @@ pub fn initialize_audio_engine(
     frequency_bits: Arc<AtomicU32>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use oboe::{
-        AudioOutputStreamSafe, AudioStream, AudioStreamBuilder, DataCallbackResult,
-        PerformanceMode, SharingMode,
+        AudioOutputStreamSync, AudioStream, AudioStreamBuilder, PerformanceMode, SharingMode,
     };
 
-    // Create audio stream
+    println!("Initializing Android audio engine with Oboe");
+
+    // Create audio stream configuration
     let mut stream = AudioStreamBuilder::default()
         .set_performance_mode(PerformanceMode::LowLatency)
-        .set_sharing_mode(SharingMode::Exclusive)
+        .set_sharing_mode(SharingMode::Shared) // Use Shared mode for better compatibility
         .set_format::<f32>()
-        .set_channel_count::<oboe::Mono>() // Use type parameter for mono
+        .set_channel_count::<oboe::Mono>()
         .set_sample_rate(44100)
+        .set_buffer_capacity_in_frames(1024)
         .open_stream()?;
 
     println!("Android audio stream created successfully");
 
-    // For now, we'll use a simple approach since the callback API is complex
-    // In a production app, you'd implement a proper audio callback
-    // This just verifies that the oboe library loads and initializes
-
+    // Start the stream
     stream.start()?;
     println!("Android audio stream started");
 
-    // Keep the stream alive by leaking it (in production, you'd want proper lifecycle management)
-    std::mem::forget(stream);
-
-    // For now, we'll just do mock audio like before, but with oboe properly initialized
+    // Move stream into the thread
     std::thread::spawn(move || {
         let mut phase = 0.0f32;
         let sample_rate = 44100.0f32;
+        let buffer_size = 256;
+        let mut buffer = vec![0.0f32; buffer_size];
 
         loop {
             if is_playing.load(Ordering::Relaxed) {
                 let freq = f32::from_bits(frequency_bits.load(Ordering::Relaxed));
-                // Simulate audio processing
-                phase += freq / sample_rate;
-                if phase >= 1.0 {
-                    phase -= 1.0;
+
+                // Generate sine wave samples
+                for sample in buffer.iter_mut() {
+                    *sample = (phase * 2.0 * std::f32::consts::PI).sin() * 0.3; // Volume at 30%
+                    phase += freq / sample_rate;
+                    if phase >= 1.0 {
+                        phase -= 1.0;
+                    }
                 }
+
+                // Try to write audio data to the stream
+                if let Ok(frames_written) = stream.write(&buffer, 0) {
+                    // Audio data written successfully
+                    if frames_written == 0 {
+                        // If no frames were written, wait a bit
+                        std::thread::sleep(std::time::Duration::from_millis(1));
+                    }
+                } else {
+                    // Error writing audio, wait and retry
+                    std::thread::sleep(std::time::Duration::from_millis(5));
+                }
+            } else {
+                // Not playing, fill with silence
+                buffer.fill(0.0);
+                let _ = stream.write(&buffer, 0);
+                std::thread::sleep(std::time::Duration::from_millis(10));
             }
-            std::thread::sleep(std::time::Duration::from_millis(1));
         }
     });
 
+    println!("Android audio engine initialized");
     Ok(())
 }

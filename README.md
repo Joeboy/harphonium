@@ -140,7 +140,7 @@ The app should produce audio immediately when clicking frequency buttons. If no 
 - Verify audio device permissions
 - Try different audio backends (ALSA/PulseAudio on Linux)
 
-### Android
+### Android Emulator
 Audio testing on Android emulator:
 - **Note**: Android emulator may not produce audible sound
 - Check logcat for audio initialization messages:
@@ -148,6 +148,17 @@ Audio testing on Android emulator:
   adb logcat | grep -E "(synthmob|oboe|audio)"
   ```
 - For actual audio testing, use a physical device
+
+### Real Android Device Testing 📱🎵
+**For complete audio verification, test on a real Android device:**
+
+- **Quick Start**: `./dev.sh android-device-test` (complete automated workflow)
+- **Documentation**: See `REAL_DEVICE_READY.md` for current status
+- **Detailed Guide**: See `TESTING_REAL_DEVICE.md` for comprehensive instructions  
+- **Quick Reference**: See `REAL_DEVICE_QUICK_REF.md` for command summaries
+- **Troubleshooting**: See `TROUBLESHOOTING_REAL_DEVICE.md` for common issues
+
+**Expected Result**: Actual audible sine wave tones from device speakers/headphones! 🔊
 
 ## Project Structure
 
