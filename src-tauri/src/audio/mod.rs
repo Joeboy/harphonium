@@ -12,8 +12,8 @@ mod android;
 
 // Cross-platform audio state
 pub struct AudioState {
-    is_playing: Arc<AtomicBool>,
-    frequency_bits: Arc<AtomicU32>,
+    pub is_playing: Arc<AtomicBool>,
+    pub frequency_bits: Arc<AtomicU32>,
 }
 
 impl AudioState {
@@ -47,6 +47,11 @@ impl AudioState {
 // Global audio state
 static AUDIO_STATE: std::sync::OnceLock<AudioState> = std::sync::OnceLock::new();
 static AUDIO_INITIALIZED: AtomicBool = AtomicBool::new(false);
+
+// Public accessor for JNI bridge
+pub fn get_audio_state() -> &'static AudioState {
+    AUDIO_STATE.get_or_init(|| AudioState::new())
+}
 
 pub fn initialize_audio() -> Result<(), Box<dyn std::error::Error>> {
     if AUDIO_INITIALIZED.load(Ordering::Relaxed) {
