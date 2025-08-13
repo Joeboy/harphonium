@@ -7,12 +7,22 @@ function App() {
   const [frequency, setFrequency] = useState<number>(440);
 
   async function playNote() {
-    // This will call our Rust backend
-    setSynthState(await invoke("play_note", { frequency: frequency }));
+    try {
+      // This will call our Rust backend
+      const result = await invoke("play_note", { frequency: frequency });
+      setSynthState(result as string);
+    } catch (error) {
+      setSynthState(`Error: ${error}`);
+    }
   }
 
   async function stopNote() {
-    setSynthState(await invoke("stop_note"));
+    try {
+      const result = await invoke("stop_note");
+      setSynthState(result as string);
+    } catch (error) {
+      setSynthState(`Error: ${error}`);
+    }
   }
 
   return (

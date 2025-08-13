@@ -1,149 +1,171 @@
-# SynthMob Roadmap - Oboe Integration
+# SynthMob Roadmap
 
-This document outlines the steps to integrate Oboe for real-time audio synthesis in the SynthMob app.
+This document outlines the development progress and future plans for the SynthMob cross-platform synthesizer app.
 
-## Phase 1: Basic Tauri App ✓ COMPLETED
+## Phase 1: Basic Tauri App ✅ COMPLETED
 - [x] Set up Tauri + React + Vite project structure
 - [x] Configure for Android targeting (Tauri v2)
 - [x] Create basic UI with frequency control
 - [x] Set up Rust backend with basic command handlers
 - [x] Create development scripts and documentation
 
-## Phase 2: Audio Foundation (Next Steps)
+## Phase 2: Cross-Platform Audio Architecture ✅ COMPLETED
+- [x] **Multi-platform audio support**: Desktop (cpal) + Android (oboe)
+- [x] **Audio module structure**: Cross-platform coordinator with platform-specific implementations
+- [x] **Desktop audio engine**: Real-time audio synthesis using cpal
+- [x] **Android audio engine**: Low-latency audio using oboe library
+- [x] **C++ runtime integration**: Proper linking for Android native libraries
+- [x] **Command interface**: `play_note` and `stop_note` Tauri commands
+- [x] **Touch-friendly UI**: Mouse and touch event handling for mobile
 
-### 2.1 Rust Audio Dependencies
-Add audio processing crates to `src-tauri/Cargo.toml`:
-```toml
-[dependencies]
-# ... existing dependencies
-dasp = "0.11"           # Digital audio signal processing
-cpal = "0.15"           # Cross-platform audio library
-ringbuf = "0.3"         # Lock-free ring buffer for audio
+## Phase 3: Android Deployment ✅ COMPLETED
+- [x] **Android build system**: Proper NDK configuration and C++ linking
+- [x] **APK generation**: Successful debug and release builds
+- [x] **Emulator testing**: App runs on Android x86_64 emulator
+- [x] **Native library loading**: Oboe integration working without crashes
+- [x] **UI/Backend communication**: React frontend successfully calling Rust audio functions
+- [x] **Development workflow**: Android dev mode and debug building
+
+## Current Architecture (Implemented)
+
+### Audio System Structure
+```
+src-tauri/src/audio/
+├── mod.rs        # Cross-platform coordinator and state management
+├── desktop.rs    # Desktop implementation using cpal
+└── android.rs    # Android implementation using oboe
 ```
 
-### 2.2 Basic Audio Engine
-Create `src-tauri/src/audio/` module:
-- `mod.rs` - Public audio interface
-- `synth.rs` - Oscillators and synthesis
-- `engine.rs` - Audio callback management
+### Key Features Working
+- **Cross-platform compilation**: Conditional compilation for desktop vs Android
+- **Unified API**: Common interface (`play_frequency`, `stop_audio`) for both platforms
+- **Touch-friendly UI**: React component with mouse and touch event handling
+- **State management**: Atomic state tracking for frequency and playback status
+- **Native integration**: Successful C++ runtime linking for Android
 
-### 2.3 Desktop Audio First
-Implement audio synthesis using cpal for desktop development:
-- Real-time audio output
-- Basic sine wave oscillator
-- Frequency control from frontend
-- Volume control
+## Phase 4: Enhanced Synthesis Features (Next Priority)
 
-## Phase 3: Android Native Audio (Oboe Integration)
+### 4.1 Audio Synthesis Enhancement
+- [ ] **Waveform types**: Add square, triangle, sawtooth waves beyond current sine wave
+- [ ] **ADSR envelope**: Attack, Decay, Sustain, Release for note dynamics  
+- [ ] **Volume control**: User-adjustable amplitude levels
+- [ ] **Filter implementation**: Low-pass, high-pass, band-pass filters
+- [ ] **Effects chain**: Basic reverb, delay, chorus effects
 
-### 3.1 Oboe Setup
-- Add Oboe as a git submodule or use precompiled binaries
-- Create C++ wrapper for Oboe functionality
-- Set up CMake build for native components
+### 4.2 Polyphony Support
+- [ ] **Multi-note playback**: Support simultaneous notes instead of single-note
+- [ ] **Voice allocation**: Manage multiple concurrent audio streams
+- [ ] **Note priority**: Handle voice stealing when max polyphony reached
 
-### 3.2 FFI Bridge
-Create Rust FFI bindings to call Oboe functions:
-```rust
-// src-tauri/src/oboe_bindings.rs
-extern "C" {
-    fn oboe_start_stream(sample_rate: i32, buffer_size: i32) -> i32;
-    fn oboe_stop_stream() -> i32;
-    fn oboe_write_audio(buffer: *const f32, frames: i32) -> i32;
-}
+## Phase 5: Enhanced User Interface
+
+### 5.1 Virtual Piano Keyboard  
+- [ ] **Piano layout**: Replace simple buttons with piano keyboard interface
+- [ ] **Multi-touch support**: Allow multiple simultaneous key presses
+- [ ] **Visual feedback**: Key press animations and active note indicators
+- [ ] **Octave selection**: Controls to change keyboard range
+
+### 5.2 Advanced Controls
+- [ ] **Parameter sliders**: Real-time control for envelope, filter, effects
+- [ ] **Preset system**: Save/load synthesizer configurations
+- [ ] **Touch gestures**: Pitch bend, modulation wheel via touch/swipe
+
+## Phase 6: Audio Quality & Performance
+
+### 6.1 Audio Engine Optimization
+- [ ] **Buffer tuning**: Optimize audio buffer sizes for latency vs stability
+- [ ] **CPU profiling**: Monitor and optimize audio processing performance
+- [ ] **Memory management**: Reduce allocations in real-time audio thread
+
+### 6.2 Mobile Platform Features
+- [ ] **Audio focus handling**: Proper Android audio session management
+- [ ] **Background audio**: Continue playing when app backgrounded
+- [ ] **Hardware integration**: Volume buttons, audio jack detection
+- [ ] **Latency measurement**: Real-time audio latency monitoring and adjustment
+
+## Current Implementation Status
+
+### ✅ Working Components
+- **Cross-platform builds**: Desktop (Linux/Windows/macOS) and Android (x86_64/aarch64)
+- **React UI**: Touch-friendly frequency input and play/stop controls
+- **Audio backends**: cpal (desktop) and oboe (Android) successfully integrated
+- **Tauri commands**: `play_note` and `stop_note` working across platforms
+- **Android deployment**: APK builds and installs successfully on emulator
+- **C++ runtime**: Proper linking resolved Android crashes
+
+### 🔧 Known Issues & Limitations
+- **Audio output verification**: While audio functions execute successfully, actual sound output needs physical device testing
+- **Single frequency mode**: Only one frequency can play at a time (no polyphony)
+- **Basic waveform**: Currently limited to sine wave generation
+- **No envelope shaping**: Abrupt note on/off without ADSR
+
+### 📁 Current File Structure
+```
+synthmob/
+├── src/                           # React frontend
+│   ├── App.tsx                   # Main UI with frequency controls
+│   └── main.tsx                  # React app entry point
+├── src-tauri/                    # Rust backend
+│   ├── src/
+│   │   ├── main.rs              # Desktop binary entry point
+│   │   ├── lib.rs               # Mobile library entry point  
+│   │   └── audio/               # Cross-platform audio module
+│   │       ├── mod.rs           # Audio coordination & state
+│   │       ├── desktop.rs       # cpal implementation
+│   │       └── android.rs       # oboe implementation
+│   ├── build.rs                 # C++ linking configuration
+│   ├── Cargo.toml              # Dependencies & targets
+│   └── gen/android/            # Generated Android project files
+└── README.md                    # Comprehensive setup documentation
 ```
 
-### 3.3 Android Audio Engine
-- Implement Android-specific audio backend using Oboe
-- Low-latency audio processing
-- Handle Android audio focus and lifecycle
+## Next Immediate Steps (Priority Order)
 
-## Phase 4: Advanced Synthesis Features
+1. **Audio output verification**: Test on physical Android device to confirm sound generation
+2. **Waveform expansion**: Add square, triangle, sawtooth wave types beyond sine
+3. **Volume control**: Add amplitude adjustment to UI and audio engine
+4. **Piano keyboard UI**: Replace simple button with proper keyboard layout
+5. **ADSR envelope**: Add attack/decay/sustain/release note dynamics
 
-### 4.1 Oscillator Types
-- Sine wave ✓ (basic)
-- Square wave
-- Triangle wave
-- Sawtooth wave
-- Noise generator
+## Development Workflow
 
-### 4.2 Synthesis Parameters
-- ADSR envelope
-- Filter (low-pass, high-pass, band-pass)
-- LFO (Low Frequency Oscillator)
-- Vibrato and tremolo
+### Current Commands
+- `npm run tauri dev` - Desktop development with hot reload
+- `npm run tauri android dev` - Android development mode  
+- `npm run tauri android build --target aarch64 --debug` - Android APK build
+- `adb install -r path/to/app.apk` - Manual APK installation
+- `adb logcat | grep synthmob` - Android app debugging
 
-### 4.3 Polyphony
-- Multiple simultaneous notes
-- Voice allocation and management
-- Note on/off handling
+### Testing Procedures  
+- **Desktop**: Direct audio output testing with system speakers/headphones
+- **Android Emulator**: UI functionality testing (limited audio capabilities)
+- **Physical Device**: Full audio output verification and performance testing
 
-## Phase 5: User Interface Enhancements
+## Key Technical Achievements
 
-### 5.1 Virtual Keyboard
-- Piano keyboard layout
-- Touch-friendly keys
-- Visual feedback for pressed keys
-- Multi-touch support
+### Solved Challenges ✅
+1. **Cross-platform audio**: Successfully implemented cpal (desktop) + oboe (Android) architecture
+2. **C++ runtime integration**: Resolved Android `__cxa_pure_virtual` crashes via proper linking in `build.rs`
+3. **Tauri v2 mobile**: Successfully configured mobile targets and conditional compilation
+4. **Android APK deployment**: Complete build pipeline from Rust/React to installable Android app
+5. **Touch interface**: React UI works seamlessly on both desktop mouse and mobile touch
 
-### 5.2 Parameter Controls
-- Sliders and knobs for synthesis parameters
-- Preset management
-- Real-time parameter updates
+### Remaining Challenges 
+1. **Audio latency optimization**: Fine-tune buffer sizes for minimal latency on mobile
+2. **Physical device testing**: Verify actual audio output beyond emulator testing  
+3. **Performance scaling**: Optimize for resource-constrained mobile hardware
+4. **Cross-platform UI consistency**: Ensure UI works well across different screen sizes
 
-### 5.3 Mobile-Optimized UI
-- Responsive design for different screen sizes
-- Touch gestures for parameter control
-- Hardware back button handling
+## Contributing & Development
 
-## Phase 6: Performance & Polish
+This project demonstrates a complete cross-platform audio application using modern Rust and web technologies. Key areas for contribution:
 
-### 6.1 Audio Optimization
-- Buffer size optimization
-- CPU usage monitoring
-- Memory allocation optimization
+- **Audio synthesis**: Expand waveform types, filters, effects
+- **UI/UX**: Design better mobile-first interface components  
+- **Performance**: Audio engine optimization and profiling
+- **Platform features**: Android-specific audio focus, background audio, hardware integration
+- **Testing**: Comprehensive audio functionality testing across devices
 
-### 6.2 Android Specific
-- Audio latency measurement
-- Background audio handling
-- Audio focus management
-- Integration with Android audio ecosystem
+## License
 
-## Implementation Notes
-
-### File Structure (Planned)
-```
-src-tauri/
-├── src/
-│   ├── main.rs
-│   ├── audio/
-│   │   ├── mod.rs
-│   │   ├── synth.rs
-│   │   ├── engine.rs
-│   │   └── oboe_bridge.rs
-│   ├── commands.rs
-│   └── oboe_bindings.rs
-├── oboe/              # Oboe C++ source (submodule)
-├── native/
-│   ├── oboe_wrapper.cpp
-│   ├── oboe_wrapper.h
-│   └── CMakeLists.txt
-└── build.rs           # Build script for native components
-```
-
-### Key Challenges
-1. **FFI Complexity**: Rust ↔ C++ ↔ Java/Kotlin integration
-2. **Real-time Audio**: Meeting low-latency requirements
-3. **Android Lifecycle**: Handling app state changes
-4. **Cross-platform**: Desktop vs Android audio backends
-5. **Performance**: Efficient audio processing on mobile hardware
-
-## Getting Started with Phase 2
-
-To continue development, the next immediate steps are:
-
-1. Add audio dependencies to Cargo.toml
-2. Implement basic audio engine with cpal for desktop
-3. Test real-time synthesis on desktop
-4. Then proceed to Android/Oboe integration
-
-Each phase builds upon the previous one, ensuring a solid foundation before adding complexity.
+This project is for educational and demonstration purposes, showcasing cross-platform mobile development with Tauri v2, Rust, and React.
