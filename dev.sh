@@ -388,6 +388,7 @@ case "$1" in
         cd src-tauri && cargo clean && cd ..
         rm -rf dist/
         rm -rf node_modules/.vite/
+        rm -rf src-tauri/gen/
         echo "Clean complete"
         ;;
     *)

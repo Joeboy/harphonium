@@ -34,24 +34,11 @@ impl AudioState {
         self.is_playing.store(false, Ordering::Relaxed);
         println!("Stopping audio");
     }
-
-    pub fn get_frequency(&self) -> f32 {
-        f32::from_bits(self.frequency_bits.load(Ordering::Relaxed))
-    }
-
-    pub fn is_playing(&self) -> bool {
-        self.is_playing.load(Ordering::Relaxed)
-    }
 }
 
 // Global audio state
 static AUDIO_STATE: std::sync::OnceLock<AudioState> = std::sync::OnceLock::new();
 static AUDIO_INITIALIZED: AtomicBool = AtomicBool::new(false);
-
-// Public accessor for JNI bridge
-pub fn get_audio_state() -> &'static AudioState {
-    AUDIO_STATE.get_or_init(|| AudioState::new())
-}
 
 pub fn initialize_audio() -> Result<(), Box<dyn std::error::Error>> {
     if AUDIO_INITIALIZED.load(Ordering::Relaxed) {

@@ -3,10 +3,6 @@
 
 mod audio;
 
-// JNI bridge for direct native audio control (Android only)
-#[cfg(target_os = "android")]
-mod jni_bridge;
-
 // Commands for both mobile and desktop
 #[tauri::command]
 async fn play_note(frequency: f32) {

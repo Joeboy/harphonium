@@ -24,8 +24,7 @@ tauri = { version = "2.0", features = [] }
 cpal = "0.15"           # Desktop audio library
 
 [target.'cfg(target_os = "android")'.dependencies]
-oboe = { version = "0.6", features = ["java-interface"] } # Android audio library with Java interface
-jni = "0.21"            # JNI bindings for direct native calls
+oboe = "0.6"            # Android audio library
 
 [[bin]]
 name = "synthmob"
