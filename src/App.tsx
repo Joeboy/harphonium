@@ -37,6 +37,33 @@ function App() {
     }
   }, []);
 
+  // Optimized touch handlers for ultra-low latency
+  const createTouchHandlers = (freq: number) => {
+    const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
+      e.preventDefault(); // Prevent default touch behaviors that cause delays
+      e.stopPropagation(); // Stop event bubbling
+      setFrequency(freq);
+
+      // Use setTimeout with 0 delay to break out of React's batching
+      setTimeout(() => {
+        if (hasFastAudio && window.FastAudio) {
+          window.FastAudio.playNote(freq);
+          setSynthState(`🚀 Fast playing: ${freq} Hz`);
+        } else {
+          playNote();
+        }
+      }, 0);
+    };
+
+    const handleEnd = (e: React.TouchEvent | React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setTimeout(() => stopNote(), 0);
+    };
+
+    return { handleStart, handleEnd };
+  };
+
   async function playNote() {
     try {
       if (hasFastAudio && window.FastAudio) {
@@ -87,48 +114,33 @@ function App() {
       <div className="frequency-buttons">
         <button
           className="freq-btn"
-          onMouseDown={() => {
-            setFrequency(220);
-            playNote();
-          }}
-          onMouseUp={stopNote}
-          onTouchStart={() => {
-            setFrequency(220);
-            playNote();
-          }}
-          onTouchEnd={stopNote}
+          onTouchStart={createTouchHandlers(220).handleStart}
+          onTouchEnd={createTouchHandlers(220).handleEnd}
+          onMouseDown={createTouchHandlers(220).handleStart}
+          onMouseUp={createTouchHandlers(220).handleEnd}
+          style={{ touchAction: 'none' }} // Disable touch gestures that cause delays
         >
           220 Hz
         </button>
 
         <button
           className="freq-btn"
-          onMouseDown={() => {
-            setFrequency(440);
-            playNote();
-          }}
-          onMouseUp={stopNote}
-          onTouchStart={() => {
-            setFrequency(440);
-            playNote();
-          }}
-          onTouchEnd={stopNote}
+          onTouchStart={createTouchHandlers(440).handleStart}
+          onTouchEnd={createTouchHandlers(440).handleEnd}
+          onMouseDown={createTouchHandlers(440).handleStart}
+          onMouseUp={createTouchHandlers(440).handleEnd}
+          style={{ touchAction: 'none' }}
         >
           440 Hz
         </button>
 
         <button
           className="freq-btn"
-          onMouseDown={() => {
-            setFrequency(880);
-            playNote();
-          }}
-          onMouseUp={stopNote}
-          onTouchStart={() => {
-            setFrequency(880);
-            playNote();
-          }}
-          onTouchEnd={stopNote}
+          onTouchStart={createTouchHandlers(880).handleStart}
+          onTouchEnd={createTouchHandlers(880).handleEnd}
+          onMouseDown={createTouchHandlers(880).handleStart}
+          onMouseUp={createTouchHandlers(880).handleEnd}
+          style={{ touchAction: 'none' }}
         >
           880 Hz
         </button>
@@ -151,10 +163,11 @@ function App() {
         <button
           type="button"
           className="custom-btn"
-          onMouseDown={playNote}
-          onMouseUp={stopNote}
-          onTouchStart={playNote}
-          onTouchEnd={stopNote}
+          onTouchStart={createTouchHandlers(frequency).handleStart}
+          onTouchEnd={createTouchHandlers(frequency).handleEnd}
+          onMouseDown={createTouchHandlers(frequency).handleStart}
+          onMouseUp={createTouchHandlers(frequency).handleEnd}
+          style={{ touchAction: 'none' }}
         >
           Play Custom
         </button>

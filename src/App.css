@@ -10,6 +10,15 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
+
+    /* Ultra-low latency touch optimizations */
+    touch-action: manipulation;
+    /* Disable pinch/zoom delays */
+    -webkit-touch-callout: none;
+    /* Disable callout delays on iOS */
+    -webkit-user-select: none;
+    /* Disable text selection delays */
+    user-select: none;
 }
 
 .container {
@@ -48,11 +57,18 @@
     background: linear-gradient(135deg, #646cff, #24c8db);
     color: white;
     cursor: pointer;
-    transition: all 0.25s;
     user-select: none;
     -webkit-user-select: none;
-    touch-action: manipulation;
     min-width: 100px;
+
+    /* Ultra-responsive touch optimizations */
+    touch-action: none;
+    /* Disable all touch gestures for instant response */
+    -webkit-tap-highlight-color: transparent;
+    /* Remove tap highlight delay */
+    -webkit-touch-callout: none;
+    transition: none;
+    /* Remove transition delays */
 }
 
 .freq-btn:active {
@@ -62,6 +78,14 @@
 
 .custom-btn {
     background-color: #4CAF50;
+
+    /* Ultra-responsive touch optimizations */
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    transition: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .custom-btn:hover {

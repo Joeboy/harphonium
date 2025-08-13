@@ -116,6 +116,8 @@ case "$1" in
                 echo "Next steps:"
                 echo "  ./dev.sh android-install    # Install to connected device"
                 echo "  ./dev.sh android-logs       # Monitor app logs"
+                echo "  ./dev.sh android-logs-clean # Clear logs buffer" 
+                echo "  ./dev.sh android-logs-native # Monitor native touch logs"
             else
                 echo "❌ Build completed but APK not found at expected location"
             fi
@@ -171,6 +173,8 @@ case "$1" in
             echo ""
             echo "Next steps:"
             echo "  ./dev.sh android-logs       # Monitor app logs"
+            echo "  ./dev.sh android-logs-clean # Clear logs buffer" 
+            echo "  ./dev.sh android-logs-native # Monitor native touch logs"
             echo "  # Launch app manually on device, or:"
             echo "  adb shell am start -n uk.co.joebutton.synthmob/.MainActivity"
         else
@@ -184,8 +188,89 @@ case "$1" in
             echo "Error: ANDROID_HOME is not set. Please run './dev.sh android-setup' first"
             exit 1
         fi
-        echo "Showing Android logs for SynthMob (press Ctrl+C to stop)..."
-        $ANDROID_HOME/platform-tools/adb logcat | grep -E "(synthmob|Playing|Stopping|RustStdoutStderr)"
+        
+        # Default timeout
+        timeout_duration=10
+        clean_first=false
+        
+        # Parse all arguments for flags
+        shift # Remove the command name
+        while [ $# -gt 0 ]; do
+            case $1 in
+                --clean|-c)
+                    clean_first=true
+                    ;;
+                --timeout=*)
+                    timeout_duration="${1#*=}"
+                    ;;
+                -t=*)
+                    timeout_duration="${1#*=}"
+                    ;;
+                --timeout|-t)
+                    shift
+                    timeout_duration="$1"
+                    ;;
+            esac
+            shift
+        done
+        
+        if [ "$clean_first" = true ]; then
+            echo "🧹 Clearing Android logs..."
+            $ANDROID_HOME/platform-tools/adb logcat -c
+            echo "✅ Android logs cleared"
+        fi
+        
+        echo "📱 Showing Android logs for SynthMob (${timeout_duration}s timeout)..."
+        timeout "${timeout_duration}" $ANDROID_HOME/platform-tools/adb logcat | grep -E "(synthmob|Playing|Stopping|RustStdoutStderr|Buffer|Performance|Oboe)" || echo "⏱️ Log monitoring timed out"
+        ;;
+    "android-logs-clean")
+        if [ -z "$ANDROID_HOME" ]; then
+            echo "Error: ANDROID_HOME is not set. Please run './dev.sh android-setup' first"
+            exit 1
+        fi
+        echo "Clearing Android logs..."
+        $ANDROID_HOME/platform-tools/adb logcat -c
+        echo "✅ Android logs cleared"
+        ;;
+    "android-logs-native")
+        if [ -z "$ANDROID_HOME" ]; then
+            echo "Error: ANDROID_HOME is not set. Please run './dev.sh android-setup' first"
+            exit 1
+        fi
+        
+        # Default timeout
+        timeout_duration=10
+        clean_first=false
+        
+        # Parse all arguments for flags
+        shift # Remove the command name
+        while [ $# -gt 0 ]; do
+            case $1 in
+                --clean|-c)
+                    clean_first=true
+                    ;;
+                --timeout=*)
+                    timeout_duration="${1#*=}"
+                    ;;
+                -t=*)
+                    timeout_duration="${1#*=}"
+                    ;;
+                --timeout|-t)
+                    shift
+                    timeout_duration="$1"
+                    ;;
+            esac
+            shift
+        done
+        
+        if [ "$clean_first" = true ]; then
+            echo "🧹 Clearing Android logs..."
+            $ANDROID_HOME/platform-tools/adb logcat -c
+            echo "✅ Android logs cleared"
+        fi
+        
+        echo "🎯 Showing native touch handler logs (${timeout_duration}s timeout)..."
+        timeout "${timeout_duration}" $ANDROID_HOME/platform-tools/adb logcat | grep -E "(NativeTouch|MainActivity.*overlay|CALLING NATIVE|Native note trigger)" || echo "⏱️ Log monitoring timed out"
         ;;
     "android-status")
         if [ -z "$ANDROID_HOME" ]; then
@@ -292,7 +377,9 @@ case "$1" in
         echo "   880 Hz (high tone)"
         echo ""
         echo "📋 Monitoring logs in separate terminal:"
-        echo "   ./dev.sh android-logs"
+        echo "   ./dev.sh android-logs         # General app logs"
+        echo "   ./dev.sh android-logs-native  # Native touch logs"
+        echo "   ./dev.sh android-logs-clean   # Clear log buffer"
         echo ""
         echo "See TESTING_REAL_DEVICE.md for complete testing guide."
         ;;
@@ -306,7 +393,7 @@ case "$1" in
     *)
         echo "SynthMob Development Helper"
         echo ""
-        echo "Usage: $0 {dev|dev-external|dev-frontend|build|build-release|android-setup|android-dev|android-emulator|android-build|android-install|android-device-test|android-logs|android-status|clean}"
+        echo "Usage: $0 {dev|dev-external|dev-frontend|build|build-release|android-setup|android-dev|android-emulator|android-build|android-install|android-device-test|android-logs|android-logs-clean|android-logs-native|android-status|clean}"
         echo ""
         echo "Desktop Commands:"
         echo "  dev           - Start development server (desktop)"
@@ -322,7 +409,9 @@ case "$1" in
         echo "  android-build       - Build Android APK (debug)"
         echo "  android-install     - Install built APK to device"
         echo "  android-device-test - Complete real device testing workflow"
-        echo "  android-logs        - Show real-time Android app logs"
+        echo "  android-logs        - Show real-time Android app logs with timeout (use --clean to clear first, --timeout=30 to set duration)"
+        echo "  android-logs-clean  - Clear Android logs buffer"
+        echo "  android-logs-native - Show native touch handler logs with timeout (use --clean to clear first, --timeout=30 to set duration)"
         echo "  android-status      - Show Android development status"
         echo ""
         echo "Utility Commands:"
