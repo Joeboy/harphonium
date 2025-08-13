@@ -1,28 +1,40 @@
 // Shared audio synthesis module using FunDSP
 // This module provides FunDSP audio generation for both desktop and Android platforms
 
-use fundsp::hacker::{sine_hz, An, Constant, Pipe, Sine, U1};
+use fundsp::hacker::*;
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::Arc;
 
 /// FunDSP-based synthesizer that can be shared across platforms
 pub struct FunDSPSynth {
-    /// FunDSP sine oscillator
-    synth: An<Pipe<Constant<U1>, Sine>>,
+    /// FunDSP synthesis chain with delay effect
+    synth: Box<dyn AudioUnit + Send>,
+    /// Frequency control for the oscillator
+    frequency_var: shared::Shared,
     /// Current frequency for frequency change detection
     current_frequency: f64,
-    /// Sample rate for proper oscillator initialization
+    /// Sample rate for proper delay calculation
     sample_rate: f32,
     /// Whether FunDSP is enabled (can be disabled if panics occur)
     enabled: bool,
 }
 
 impl FunDSPSynth {
-    /// Create a new FunDSP synthesizer
     pub fn new(sample_rate: f32) -> Result<Self, Box<dyn std::error::Error>> {
-        let mut synth = sine_hz(440.0);
-        synth.set_sample_rate(sample_rate as f64);
+        // Create shared variable for frequency control
+        let frequency_var = shared(440.0);
+
+        // Calculate delay in samples for 25ms (much smaller buffer)
+        let delay_samples = (0.025 * sample_rate) as f32;
+
+        // Use the `split` operator to create two outputs, then sum them
+        let synth = Box::new(
+            var(&frequency_var) >> sine() >> split() >> (pass() + delay(0.25) * 0.3) >> join(),
+        );
 
         Ok(FunDSPSynth {
             synth,
+            frequency_var,
             current_frequency: 440.0,
             sample_rate,
             enabled: true,
@@ -38,9 +50,7 @@ impl FunDSPSynth {
         let new_freq = frequency as f64;
         if (new_freq - self.current_frequency).abs() > 0.1 {
             self.current_frequency = new_freq;
-            // Create a new sine oscillator with the updated frequency
-            self.synth = sine_hz(frequency);
-            self.synth.set_sample_rate(self.sample_rate as f64);
+            self.frequency_var.set_value(frequency as f32);
         }
     }
 
@@ -57,7 +67,7 @@ impl FunDSPSynth {
             let output = result as f32;
             // Safety: ensure output is finite and in valid range
             if output.is_finite() && output.abs() <= 1.0 {
-                output * 0.5 // Apply volume scaling
+                output * 0.4 // Apply volume scaling (reduced for delay effect)
             } else {
                 0.0 // Safety fallback
             }
@@ -66,5 +76,25 @@ impl FunDSPSynth {
             self.enabled = false;
             0.0
         }
+    }
+
+    /// Generate a single sample with atomic controls (for Android callback)
+    pub fn get_sample_from_atomics(
+        &mut self,
+        is_playing: Arc<AtomicBool>,
+        frequency_bits: Arc<AtomicU32>,
+    ) -> f32 {
+        if !is_playing.load(Ordering::Relaxed) {
+            return 0.0;
+        }
+
+        let frequency_bits_val = frequency_bits.load(Ordering::Relaxed);
+        let frequency = f32::from_bits(frequency_bits_val);
+
+        // Update frequency if needed
+        self.set_frequency(frequency);
+
+        // Generate sample
+        self.get_sample()
     }
 }
