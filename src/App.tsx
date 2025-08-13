@@ -2,57 +2,40 @@ import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import './App.css';
 
-// Declare global FastAudio interface for TypeScript
-declare global {
-  interface Window {
-    FastAudio?: {
-      playNote: (frequency: number) => void;
-      stopNote: () => void;
-      ping: () => string;
-    };
-  }
-}
-
 function App() {
   const [synthState, setSynthState] = useState<string>('');
   const [frequency, setFrequency] = useState<number>(440);
-  const [hasFastAudio, setHasFastAudio] = useState<boolean>(false);
+  const [isAndroid, setIsAndroid] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check if fast audio interface is available (Android)
-    if (window.FastAudio) {
-      try {
-        const response = window.FastAudio.ping();
-        if (response === 'pong') {
-          setHasFastAudio(true);
-          setSynthState('✅ Fast audio interface ready');
-          console.log('Fast audio interface detected and working');
-        }
-      } catch (error) {
-        console.log('Fast audio interface not working:', error);
-      }
+    // Detect if we're running on Android
+    const userAgent = navigator.userAgent.toLowerCase();
+    const androidDetected = userAgent.includes('android');
+
+    setIsAndroid(androidDetected);
+
+    if (androidDetected) {
+      setSynthState(
+        '🚀 Android: Optimized Tauri WebView with callback mode audio'
+      );
+      console.log(
+        'Android detected - using optimized WebView with callback audio engine'
+      );
     } else {
-      setSynthState('Using Tauri IPC audio');
-      console.log('Using fallback Tauri IPC audio');
+      setSynthState('💻 Desktop: Tauri with callback mode audio');
+      console.log('Desktop mode - using Tauri with callback audio engine');
     }
   }, []);
 
-  // Optimized touch handlers for ultra-low latency
+  // Optimized touch handlers with minimal latency
   const createTouchHandlers = (freq: number) => {
     const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
-      e.preventDefault(); // Prevent default touch behaviors that cause delays
+      e.preventDefault(); // Prevent default touch behaviors
       e.stopPropagation(); // Stop event bubbling
       setFrequency(freq);
 
-      // Use setTimeout with 0 delay to break out of React's batching
-      setTimeout(() => {
-        if (hasFastAudio && window.FastAudio) {
-          window.FastAudio.playNote(freq);
-          setSynthState(`🚀 Fast playing: ${freq} Hz`);
-        } else {
-          playNote();
-        }
-      }, 0);
+      // Use setTimeout with 0 delay to break out of React's batching for faster execution
+      setTimeout(() => playNote(), 0);
     };
 
     const handleEnd = (e: React.TouchEvent | React.MouseEvent) => {
@@ -66,17 +49,9 @@ function App() {
 
   async function playNote() {
     try {
-      if (hasFastAudio && window.FastAudio) {
-        // FAST PATH: Direct WebView->Native call (Android)
-        console.log(`Fast audio play: ${frequency} Hz`);
-        window.FastAudio.playNote(frequency);
-        setSynthState(`🚀 Fast playing: ${frequency} Hz`);
-      } else {
-        // FALLBACK: Tauri IPC (desktop/other platforms)
-        console.log(`Tauri audio play: ${frequency} Hz`);
-        await invoke('play_note', { frequency: frequency });
-        setSynthState(`🔊 Playing: ${frequency} Hz`);
-      }
+      console.log(`Playing note: ${frequency} Hz`);
+      await invoke('play_note', { frequency: frequency });
+      setSynthState(`🔊 Playing: ${frequency} Hz`);
     } catch (error) {
       setSynthState(`Error: ${error}`);
     }
@@ -84,17 +59,9 @@ function App() {
 
   async function stopNote() {
     try {
-      if (hasFastAudio && window.FastAudio) {
-        // FAST PATH: Direct WebView->Native call (Android)
-        console.log('Fast audio stop');
-        window.FastAudio.stopNote();
-        setSynthState('🚀 Fast stopped');
-      } else {
-        // FALLBACK: Tauri IPC (desktop/other platforms)
-        console.log('Tauri audio stop');
-        await invoke('stop_note');
-        setSynthState('🔇 Stopped');
-      }
+      console.log('Stopping note');
+      await invoke('stop_note');
+      setSynthState('🔇 Stopped');
     } catch (error) {
       setSynthState(`Error: ${error}`);
     }
@@ -107,7 +74,9 @@ function App() {
       <div className="status">
         <p>{synthState}</p>
         <small>
-          {hasFastAudio ? '⚡ Low-latency mode active' : '🔄 Standard mode'}
+          {isAndroid
+            ? '⚡ Callback mode audio engine'
+            : '🔄 Desktop callback mode'}
         </small>
       </div>
 
@@ -118,7 +87,7 @@ function App() {
           onTouchEnd={createTouchHandlers(220).handleEnd}
           onMouseDown={createTouchHandlers(220).handleStart}
           onMouseUp={createTouchHandlers(220).handleEnd}
-          style={{ touchAction: 'none' }} // Disable touch gestures that cause delays
+          style={{ touchAction: 'none' }}
         >
           220 Hz
         </button>

@@ -21,14 +21,163 @@
     user-select: none;
 }
 
+/* Base styles for the synthesizer app */
 .container {
     margin: 0;
-    padding: 20px;
+    padding: 40px 20px 20px 20px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     text-align: center;
-    min-height: 100vh;
+    max-width: 400px;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+h1 {
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.status {
+    margin-bottom: 30px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.status p {
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.status small {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.frequency-buttons {
+    margin: 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.freq-btn {
+    padding: 20px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border: 2px solid #007bff;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.freq-btn:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+}
+
+.freq-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.row {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+input {
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 2px solid #ced4da;
+    border-radius: 8px;
+    background: white;
+    color: #495057;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+label {
+    display: block;
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 8px;
+    font-weight: 500;
+}
+
+.custom-btn {
+    padding: 15px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: 2px solid #28a745;
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+}
+
+.custom-btn:hover {
+    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    transform: translateY(-1px);
+}
+
+.custom-btn:active {
+    transform: translateY(0);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 15px;
+        max-width: 100%;
+    }
+
+    .frequency-buttons {
+        margin: 20px 0;
+        gap: 15px;
+    }
+
+    .freq-btn {
+        padding: 25px 20px;
+        font-size: 1.3rem;
+        border-radius: 15px;
+    }
+
+    .row {
+        gap: 12px;
+        margin-top: 25px;
+    }
+
+    input {
+        padding: 15px;
+        font-size: 1.1rem;
+    }
+
+    .custom-btn {
+        padding: 18px 20px;
+        font-size: 1.1rem;
+    }
 }
 
 .status {
@@ -69,6 +218,34 @@
     -webkit-touch-callout: none;
     transition: none;
     /* Remove transition delays */
+}
+
+.freq-btn.native-mode {
+    border: 2px dashed #24c8db;
+    background: linear-gradient(135deg, rgba(100, 108, 255, 0.3), rgba(36, 200, 219, 0.3));
+    position: relative;
+}
+
+.freq-btn.native-mode::after {
+    content: "⚡";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 0.8em;
+}
+
+.native-overlay-notice {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: rgba(36, 200, 219, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(36, 200, 219, 0.3);
+}
+
+.native-overlay-notice small {
+    color: #24c8db;
+    font-weight: 500;
 }
 
 .freq-btn:active {
