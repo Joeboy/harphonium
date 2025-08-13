@@ -11,6 +11,8 @@ pub struct FunDSPSynth {
     synth: Box<dyn AudioUnit + Send>,
     /// Frequency control for the oscillator
     frequency_var: shared::Shared,
+    /// Playing state control (0.0 = silent, 1.0 = playing)
+    playing_var: shared::Shared,
     /// Current frequency for frequency change detection
     current_frequency: f64,
     /// Sample rate for proper delay calculation
@@ -21,20 +23,25 @@ pub struct FunDSPSynth {
 
 impl FunDSPSynth {
     pub fn new(sample_rate: f32) -> Result<Self, Box<dyn std::error::Error>> {
-        // Create shared variable for frequency control
+        // Create shared variables for frequency and playing state control
         let frequency_var = shared(440.0);
-
-        // Calculate delay in samples for 25ms (much smaller buffer)
-        let delay_samples = (0.025 * sample_rate) as f32;
+        let playing_var = shared(1.0); // 1.0 = playing, 0.0 = silent
 
         // Use the `split` operator to create two outputs, then sum them
+        // Apply playing_var BEFORE the delay so it gates the input to the delay buffer
         let synth = Box::new(
-            var(&frequency_var) >> sine() >> split() >> (pass() + delay(0.25) * 0.3) >> join(),
+            var(&frequency_var)
+                >> sine()
+                >> var(&playing_var) * pass()
+                >> split()
+                >> (pass() + delay(0.25) * 0.3)
+                >> join(),
         );
 
         Ok(FunDSPSynth {
             synth,
             frequency_var,
+            playing_var,
             current_frequency: 440.0,
             sample_rate,
             enabled: true,
@@ -84,9 +91,13 @@ impl FunDSPSynth {
         is_playing: Arc<AtomicBool>,
         frequency_bits: Arc<AtomicU32>,
     ) -> f32 {
-        if !is_playing.load(Ordering::Relaxed) {
-            return 0.0;
-        }
+        // Update playing state in the synthesis pipeline
+        let playing = if is_playing.load(Ordering::Relaxed) {
+            1.0
+        } else {
+            0.0
+        };
+        self.playing_var.set_value(playing);
 
         let frequency_bits_val = frequency_bits.load(Ordering::Relaxed);
         let frequency = f32::from_bits(frequency_bits_val);
@@ -94,7 +105,6 @@ impl FunDSPSynth {
         // Update frequency if needed
         self.set_frequency(frequency);
 
-        // Generate sample
         self.get_sample()
     }
 }
