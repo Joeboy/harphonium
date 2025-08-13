@@ -1,5 +1,5 @@
 // Desktop audio implementation using cpal with FunDSP integration
-use super::synthesis::UnifiedSynth;
+use super::synthesis::FunDSPSynth;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use std::sync::atomic::{AtomicBool, AtomicU32};
 use std::sync::Arc;
@@ -22,20 +22,35 @@ pub fn initialize_audio_engine(
         sample_rate, config.channels
     );
 
-    // Create unified synthesizer with FunDSP support
-    let mut synth = UnifiedSynth::new(sample_rate);
-
-    if synth.is_using_fundsp() {
-        println!("🚀 Desktop audio using FunDSP synthesis");
-    } else {
-        println!("⚡ Desktop audio using legacy synthesis");
-    }
+    // Create FunDSP synthesizer (error if FunDSP fails)
+    let mut synth = FunDSPSynth::new(sample_rate)?;
+    println!("🚀 Desktop audio using FunDSP synthesis (no fallback)");
 
     let stream = device.build_output_stream(
         &config,
         move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-            // Fill the buffer using the unified synthesizer
-            synth.fill_buffer(data, is_playing.clone(), frequency_bits.clone());
+            // Check if currently playing
+            let playing = is_playing.load(std::sync::atomic::Ordering::Relaxed);
+            let freq_bits = frequency_bits.load(std::sync::atomic::Ordering::Relaxed);
+            let frequency = f32::from_bits(freq_bits);
+            
+            if playing {
+                // Update frequency if changed
+                synth.set_frequency(frequency);
+                
+                // Fill buffer with FunDSP samples
+                for frame in data.chunks_mut(config.channels as usize) {
+                    let sample = synth.get_sample();
+                    for channel_sample in frame.iter_mut() {
+                        *channel_sample = sample;
+                    }
+                }
+            } else {
+                // Fill with silence when not playing
+                for sample in data.iter_mut() {
+                    *sample = 0.0;
+                }
+            }
         },
         |err| eprintln!("Desktop audio stream error: {}", err),
         None,

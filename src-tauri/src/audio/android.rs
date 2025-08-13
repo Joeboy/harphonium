@@ -1,5 +1,5 @@
 // Android audio implementation using oboe with FunDSP integration
-use super::synthesis::UnifiedSynth;
+use super::synthesis::FunDSPSynth;
 use std::sync::atomic::{AtomicBool, AtomicU32};
 use std::sync::Arc;
 
@@ -16,7 +16,7 @@ pub fn initialize_audio_engine(
 
     // Create callback handler with ultra-low latency processing using FunDSP
     struct AudioCallback {
-        synth: UnifiedSynth,
+        synth: FunDSPSynth,
         is_playing: Arc<AtomicBool>,
         frequency_bits: Arc<AtomicU32>,
     }
@@ -29,11 +29,11 @@ pub fn initialize_audio_engine(
             _stream: &mut dyn AudioOutputStreamSafe,
             frames: &mut [f32],
         ) -> DataCallbackResult {
-            // Generate audio using the unified synthesizer
+            // Generate audio using FunDSP synthesis
             for sample in frames.iter_mut() {
                 *sample = self
                     .synth
-                    .get_sample(self.is_playing.clone(), self.frequency_bits.clone());
+                    .get_sample_from_atomics(self.is_playing.clone(), self.frequency_bits.clone());
             }
 
             DataCallbackResult::Continue
@@ -48,27 +48,31 @@ pub fn initialize_audio_engine(
     let mut best_latency = f32::MAX;
     let mut final_sample_rate = 48000.0;
 
-    // Helper function to create audio callback with unified synthesizer
-    let create_callback = |sample_rate: f32| -> AudioCallback {
-        let synth = UnifiedSynth::new(sample_rate);
+    // Helper function to create audio callback with FunDSP synthesizer
+    let create_callback = |sample_rate: f32| -> Result<AudioCallback, Box<dyn std::error::Error>> {
+        let synth = FunDSPSynth::new(sample_rate)?;
+        println!("🚀 Android audio using FunDSP synthesis (no fallback)");
 
-        if synth.is_using_fundsp() {
-            println!("🚀 Android audio using FunDSP synthesis");
-        } else {
-            println!("⚡ Android audio using legacy synthesis");
-        }
-
-        AudioCallback {
+        Ok(AudioCallback {
             synth,
             is_playing: is_playing.clone(),
             frequency_bits: frequency_bits.clone(),
-        }
+        })
     };
 
     // Strategy 1: CALLBACK + LowLatency + Exclusive - most aggressive
     for &sample_rate in &sample_rates {
         for &buffer_size in &buffer_sizes {
-            let callback = create_callback(sample_rate as f32);
+            let callback = match create_callback(sample_rate as f32) {
+                Ok(cb) => cb,
+                Err(e) => {
+                    attempt_info.push(format!(
+                        "CALLBACK+LowLatency+Exclusive {}Hz {} failed to create FunDSP: {}",
+                        sample_rate, buffer_size, e
+                    ));
+                    continue;
+                }
+            };
 
             match AudioStreamBuilder::default()
                 .set_format::<f32>()
@@ -108,7 +112,16 @@ pub fn initialize_audio_engine(
     if stream.is_none() {
         for &sample_rate in &sample_rates {
             for &buffer_size in &buffer_sizes {
-                let callback = create_callback(sample_rate as f32);
+                let callback = match create_callback(sample_rate as f32) {
+                    Ok(cb) => cb,
+                    Err(e) => {
+                        attempt_info.push(format!(
+                            "CALLBACK+PowerSaving+Exclusive {}Hz {} failed to create FunDSP: {}",
+                            sample_rate, buffer_size, e
+                        ));
+                        continue;
+                    }
+                };
 
                 match AudioStreamBuilder::default()
                     .set_format::<f32>()
@@ -149,7 +162,16 @@ pub fn initialize_audio_engine(
     if stream.is_none() {
         println!("Callback exclusive modes failed, trying callback shared mode...");
         for &sample_rate in &sample_rates {
-            let callback = create_callback(sample_rate as f32);
+            let callback = match create_callback(sample_rate as f32) {
+                Ok(cb) => cb,
+                Err(e) => {
+                    attempt_info.push(format!(
+                        "CALLBACK+LowLatency+Shared {}Hz failed to create FunDSP: {}",
+                        sample_rate, e
+                    ));
+                    continue;
+                }
+            };
 
             match AudioStreamBuilder::default()
                 .set_format::<f32>()
