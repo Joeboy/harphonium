@@ -2,6 +2,9 @@
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 
+// Shared synthesis module using FunDSP
+mod synthesis;
+
 // Desktop audio implementation using cpal
 #[cfg(not(target_os = "android"))]
 mod desktop;

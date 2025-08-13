@@ -1,6 +1,7 @@
-// Desktop audio implementation using cpal
+// Desktop audio implementation using cpal with FunDSP integration
+use super::synthesis::UnifiedSynth;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32};
 use std::sync::Arc;
 
 pub fn initialize_audio_engine(
@@ -16,33 +17,33 @@ pub fn initialize_audio_engine(
     let config: cpal::StreamConfig = config.into();
 
     let sample_rate = config.sample_rate.0 as f32;
-    let mut phase = 0.0f32;
+    println!(
+        "🎵 Desktop audio: {} Hz, {} channels",
+        sample_rate, config.channels
+    );
+
+    // Create unified synthesizer with FunDSP support
+    let mut synth = UnifiedSynth::new(sample_rate);
+
+    if synth.is_using_fundsp() {
+        println!("🚀 Desktop audio using FunDSP synthesis");
+    } else {
+        println!("⚡ Desktop audio using legacy synthesis");
+    }
 
     let stream = device.build_output_stream(
         &config,
         move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-            let freq_bits = frequency_bits.load(Ordering::Relaxed);
-            let freq = f32::from_bits(freq_bits);
-            let playing = is_playing.load(Ordering::Relaxed);
-
-            for sample in data.iter_mut() {
-                if playing {
-                    // Generate sine wave
-                    *sample = (phase * 2.0 * std::f32::consts::PI).sin() * 0.2; // 20% volume
-                    phase += freq / sample_rate;
-                    if phase >= 1.0 {
-                        phase -= 1.0;
-                    }
-                } else {
-                    *sample = 0.0;
-                }
-            }
+            // Fill the buffer using the unified synthesizer
+            synth.fill_buffer(data, is_playing.clone(), frequency_bits.clone());
         },
         |err| eprintln!("Desktop audio stream error: {}", err),
         None,
     )?;
 
     stream.play()?;
+
+    println!("🎯 Desktop audio stream started");
 
     // Keep the stream alive by leaking it (in production, you'd want proper lifecycle management)
     std::mem::forget(stream);
