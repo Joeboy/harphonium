@@ -29,26 +29,11 @@ pub fn initialize_audio_engine(
     let stream = device.build_output_stream(
         &config,
         move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-            // Check if currently playing
-            let playing = is_playing.load(std::sync::atomic::Ordering::Relaxed);
-            let freq_bits = frequency_bits.load(std::sync::atomic::Ordering::Relaxed);
-            let frequency = f32::from_bits(freq_bits);
-            
-            if playing {
-                // Update frequency if changed
-                synth.set_frequency(frequency);
-                
-                // Fill buffer with FunDSP samples
-                for frame in data.chunks_mut(config.channels as usize) {
-                    let sample = synth.get_sample();
-                    for channel_sample in frame.iter_mut() {
-                        *channel_sample = sample;
-                    }
-                }
-            } else {
-                // Fill with silence when not playing
-                for sample in data.iter_mut() {
-                    *sample = 0.0;
+            // Fill buffer with FunDSP samples (playing state handled in pipeline)
+            for frame in data.chunks_mut(config.channels as usize) {
+                let sample = synth.get_sample_from_atomics(is_playing.clone(), frequency_bits.clone());
+                for channel_sample in frame.iter_mut() {
+                    *channel_sample = sample;
                 }
             }
         },
