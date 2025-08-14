@@ -1,0 +1,121 @@
+.synth-tab {
+  padding: 20px;
+  max-width: 100%;
+  overflow-y: auto;
+}
+
+.synth-tab h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.5em;
+}
+
+.synth-section {
+  margin-bottom: 30px;
+  padding: 15px;
+  background: #f8f8f8;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.synth-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #555;
+  font-size: 1.2em;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+.control-group {
+  margin-bottom: 15px;
+}
+
+.control-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #444;
+  font-size: 0.9em;
+}
+
+.control-group select,
+.control-group input[type="range"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.control-group select {
+  background: white;
+  cursor: pointer;
+}
+
+.control-group input[type="range"] {
+  height: 6px;
+  background: #ddd;
+  outline: none;
+  border-radius: 3px;
+  padding: 0;
+  margin: 5px 0;
+  cursor: pointer;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.control-group input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.control-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+  transform: scale(1.2);
+  accent-color: #4CAF50;
+}
+
+.control-group label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .synth-tab {
+    padding: 15px;
+  }
+  
+  .synth-section {
+    padding: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .control-group input[type="range"]::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .control-group input[type="range"]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+  }
+}

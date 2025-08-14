@@ -66,6 +66,7 @@ html, body {
   width: 150px;
   min-width: 150px;
   max-width: 150px;
+  height: 100vh; /* Ensure full viewport height */
   display: flex;
   background: #2a2a2a;
   flex-shrink: 0; /* Never shrink */

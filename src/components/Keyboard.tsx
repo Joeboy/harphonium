@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import './Keyboard.css';
 
 interface KeyboardProps {
@@ -15,41 +15,6 @@ interface KeyData {
 
 const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [keyHeight, setKeyHeight] = useState<number>(45);
-  const [blackKeyHeight, setBlackKeyHeight] = useState<number>(36);
-
-  // Calculate key sizes based on container height and number of octaves
-  useEffect(() => {
-    const calculateKeySizes = () => {
-      if (!containerRef.current) return;
-
-      const containerHeight = containerRef.current.clientHeight;
-      const totalKeys = Math.ceil(octaves * 12);
-      
-      // Account for container padding, gaps between keys, and some buffer
-      const containerPadding = 20; // 10px top + 10px bottom
-      const keyboardPadding = 10; // 5px left/right padding in keyboard
-      const gapSize = 3; // gap between keys
-      const totalGaps = (totalKeys - 1) * gapSize;
-      
-      const availableHeight = containerHeight - containerPadding - keyboardPadding - totalGaps;
-      
-      // Calculate key height (white keys are the base, black keys are ~80% of white key height)
-      const calculatedKeyHeight = Math.max(Math.floor(availableHeight / totalKeys), 20); // minimum 20px
-      const calculatedBlackKeyHeight = Math.max(Math.floor(calculatedKeyHeight * 0.8), 16); // minimum 16px
-      
-      setKeyHeight(calculatedKeyHeight);
-      setBlackKeyHeight(calculatedBlackKeyHeight);
-    };
-
-    calculateKeySizes();
-    
-    // Recalculate on window resize
-    const handleResize = () => calculateKeySizes();
-    window.addEventListener('resize', handleResize);
-    
-    return () => window.removeEventListener('resize', handleResize);
-  }, [octaves]);
 
   // Generate piano keys dynamically based on octaves setting
   const generateKeys = (numOctaves: number): KeyData[] => {
@@ -127,8 +92,8 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves })
         {keys.map((key) => {
           const { handleStart, handleEnd } = createTouchHandlers(key.frequency);
           const dynamicStyle = {
-            minHeight: key.isBlack ? `${blackKeyHeight}px` : `${keyHeight}px`,
-            height: key.isBlack ? `${blackKeyHeight}px` : `${keyHeight}px`,
+            flex: key.isBlack ? '0.8' : '1', // Black keys take 80% of white key height
+            minHeight: key.isBlack ? '12px' : '15px', // Minimum heights
           };
           
           return (

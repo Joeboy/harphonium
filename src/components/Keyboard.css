@@ -3,8 +3,8 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100%;
-    padding: 10px;
+    height: 100vh; /* Force full viewport height */
+    padding: 1px; /* Minimal padding */
     box-sizing: border-box;
     background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
     overflow: hidden;
@@ -13,11 +13,11 @@
 .keyboard {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 1px; /* Minimal gap */
     width: 100%;
-    flex: 1;
+    height: 100%; /* Force to take all available height */
     overflow-y: auto;
-    padding: 0 5px;
+    padding: 0 1px; /* Minimal padding */
 
     /* Custom scrollbar */
     scrollbar-width: thin;
@@ -51,7 +51,7 @@
     transition: all 0.1s ease;
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
     position: relative;
-    flex-shrink: 0; /* Prevent keys from shrinking */
+    /* Keys will now flex to fill space instead of fixed height */
 
     /* Ultra-responsive touch optimizations */
     touch-action: none;
