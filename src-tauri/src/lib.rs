@@ -18,6 +18,18 @@ async fn stop_note() {
     }
 }
 
+#[tauri::command]
+async fn set_master_volume(volume: f32) {
+    if let Err(e) = audio::set_master_volume(volume) {
+        eprintln!("Error setting master volume: {}", e);
+    }
+}
+
+#[tauri::command]
+async fn get_master_volume() -> f32 {
+    audio::get_master_volume()
+}
+
 // Mobile library entry point
 #[cfg(mobile)]
 #[tauri::mobile_entry_point]
@@ -31,7 +43,12 @@ pub fn main() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![play_note, stop_note])
+        .invoke_handler(tauri::generate_handler![
+            play_note,
+            stop_note,
+            set_master_volume,
+            get_master_volume
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

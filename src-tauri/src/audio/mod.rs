@@ -69,19 +69,20 @@ impl AudioEngine {
         }
     }
 
-    pub fn is_playing(&self) -> bool {
-        if let Ok(synth) = self.synth.lock() {
-            synth.is_playing()
+    pub fn set_master_volume(&self, volume: f32) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.set_master_volume(volume);
+            Ok(())
         } else {
-            false
+            Err("Failed to acquire synth lock".to_string())
         }
     }
 
-    pub fn get_frequency(&self) -> f32 {
+    pub fn get_master_volume(&self) -> f32 {
         if let Ok(synth) = self.synth.lock() {
-            synth.get_frequency()
+            synth.get_master_volume()
         } else {
-            440.0
+            0.7 // Default volume
         }
     }
 }
@@ -124,18 +125,23 @@ pub fn stop_audio() -> Result<(), String> {
     }
 }
 
-pub fn is_audio_playing() -> bool {
+pub fn set_master_volume(volume: f32) -> Result<(), String> {
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
     if let Some(engine) = AUDIO_ENGINE.get() {
-        engine.is_playing()
+        engine.set_master_volume(volume)
     } else {
-        false
+        Err("Audio engine not initialized".to_string())
     }
 }
 
-pub fn get_current_frequency() -> f32 {
+pub fn get_master_volume() -> f32 {
     if let Some(engine) = AUDIO_ENGINE.get() {
-        engine.get_frequency()
+        engine.get_master_volume()
     } else {
-        440.0
+        0.7 // Default volume
     }
 }

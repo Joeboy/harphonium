@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import './SynthTab.css';
 
 interface SynthTabProps {
@@ -13,11 +14,33 @@ const SynthTab: React.FC<SynthTabProps> = () => {
   const [releaseTime, setReleaseTime] = useState(0.3);
   const [filterCutoff, setFilterCutoff] = useState(1000);
   const [filterResonance, setFilterResonance] = useState(0.5);
-  const [masterVolume, setMasterVolume] = useState(40);
+  const [masterVolume, setMasterVolume] = useState(70);
+
+  // Load initial master volume on component mount
+  useEffect(() => {
+    const loadMasterVolume = async () => {
+      try {
+        const volume: number = await invoke('get_master_volume');
+        setMasterVolume(Math.round(volume * 100)); // Convert from 0-1 to 0-100 for UI
+      } catch (error) {
+        console.error('Failed to get master volume:', error);
+      }
+    };
+    loadMasterVolume();
+  }, []);
+
+  // Handle master volume changes
+  const handleMasterVolumeChange = async (value: number) => {
+    setMasterVolume(value);
+    try {
+      await invoke('set_master_volume', { volume: value / 100 }); // Convert from 0-100 to 0-1
+    } catch (error) {
+      console.error('Failed to set master volume:', error);
+    }
+  };
 
   return (
     <div className="synth-tab">
-      <h2>Synthesizer Controls</h2>
       
       <div className="synth-section">
         <h3>Master</h3>
@@ -30,7 +53,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
             max="100"
             step="1"
             value={masterVolume}
-            onChange={(e) => setMasterVolume(parseInt(e.target.value))}
+            onChange={(e) => handleMasterVolumeChange(parseInt(e.target.value))}
           />
         </div>
       </div>

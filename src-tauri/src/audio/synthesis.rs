@@ -13,6 +13,8 @@ pub struct FunDSPSynth {
     frequency_var: shared::Shared,
     /// Key down state control (0.0 = key up/silent, 1.0 = key down/playing) - used as ADSR gate
     key_down_var: shared::Shared,
+    /// Master volume control (0.0 = silent, 1.0 = full volume)
+    master_volume_var: shared::Shared,
     /// Sample rate for proper delay calculation
     sample_rate: f32,
     /// Whether FunDSP is enabled (can be disabled if panics occur)
@@ -21,18 +23,19 @@ pub struct FunDSPSynth {
 
 impl FunDSPSynth {
     pub fn new(sample_rate: f32) -> Result<Self, Box<dyn std::error::Error>> {
-        // Create shared variables for frequency and key down state
+        // Create shared variables for frequency, key down state, and master volume
         let frequency_var = shared(440.0);
         let key_down_var = shared(0.0); // 0.0 = key up/silent, 1.0 = key down/playing
+        let master_volume_var = shared(0.7); // Default to 70% volume
 
         // ADSR parameters: Attack=0.1s, Decay=0.2s, Sustain=0.6, Release=0.3s
         let adsr_envelope = adsr_live(0.02, 0.2, 0.6, 0.3);
 
-        // Synthesis pipeline with ADSR envelope:
+        // Synthesis pipeline with ADSR envelope and master volume:
         // 1. Generate sine wave
         // 2. Apply ADSR envelope (controlled by key_down_var as gate)
         // 3. Add delay effect
-        // 4. Apply final gain/volume control
+        // 4. Apply base gain, then master volume
         let mut synth = Box::new(
             var(&frequency_var)
                 >> sine()
@@ -40,7 +43,8 @@ impl FunDSPSynth {
                 >> split()
                 >> (pass() + delay(0.3) * 0.3)
                 >> join()
-                >> mul(0.4), // Final gain
+                >> mul(0.4) // Base gain
+                >> (pass() * var(&master_volume_var)), // Master volume control
         );
 
         // Set the correct sample rate for the synthesizer
@@ -53,6 +57,7 @@ impl FunDSPSynth {
             synth,
             frequency_var,
             key_down_var,
+            master_volume_var,
             sample_rate,
             enabled: true,
         })
@@ -64,21 +69,25 @@ impl FunDSPSynth {
             return 0.0;
         }
 
-        // Use panic catching to handle FunDSP issues gracefully
-        if let Ok(result) =
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.synth.get_mono()))
-        {
-            let output = result as f32;
-            // Safety: ensure output is finite and in valid range
-            if output.is_finite() && output.abs() <= 1.0 {
-                output
-            } else {
-                0.0 // Safety fallback
+        // Try to get a sample from the synthesizer
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            self.synth.get_mono()
+        }));
+
+        match result {
+            Ok(output) => {
+                // Safety: ensure output is finite and in valid range
+                if output.is_finite() && output.abs() <= 1.0 {
+                    output
+                } else {
+                    0.0 // Safety fallback
+                }
+            },
+            Err(_) => {
+                // If FunDSP panics, disable it for this instance
+                self.enabled = false;
+                0.0
             }
-        } else {
-            // If FunDSP panics, disable it for this instance
-            self.enabled = false;
-            0.0
         }
     }
 
@@ -134,5 +143,20 @@ impl FunDSPSynth {
     /// Get current frequency from the actual synthesis variable
     pub fn get_frequency(&self) -> f32 {
         self.frequency_var.value()
+    }
+
+    /// Set master volume (0.0 = silent, 1.0 = full volume)
+    pub fn set_master_volume(&mut self, volume: f32) {
+        // Clamp volume to valid range
+        let clamped_volume = volume.clamp(0.0, 1.0);
+        
+        if self.enabled {
+            self.master_volume_var.set_value(clamped_volume);
+        }
+    }
+
+    /// Get current master volume
+    pub fn get_master_volume(&self) -> f32 {
+        self.master_volume_var.value()
     }
 }
