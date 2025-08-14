@@ -4,7 +4,6 @@ import './App.css';
 
 function App() {
   const [synthState, setSynthState] = useState<string>('');
-  const [frequency, setFrequency] = useState<number>(440);
   const [isAndroid, setIsAndroid] = useState<boolean>(false);
 
   useEffect(() => {
@@ -32,10 +31,9 @@ function App() {
     const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
       e.preventDefault(); // Prevent default touch behaviors
       e.stopPropagation(); // Stop event bubbling
-      setFrequency(freq);
 
       // Use setTimeout with 0 delay to break out of React's batching for faster execution
-      setTimeout(() => playNote(), 0);
+      setTimeout(() => playNote(freq), 0);
     };
 
     const handleEnd = (e: React.TouchEvent | React.MouseEvent) => {
@@ -47,7 +45,7 @@ function App() {
     return { handleStart, handleEnd };
   };
 
-  async function playNote() {
+  async function playNote(frequency: number) {
     try {
       console.log(`Playing note: ${frequency} Hz`);
       await invoke('play_note', { frequency: frequency });
@@ -112,33 +110,6 @@ function App() {
           style={{ touchAction: 'none' }}
         >
           880 Hz
-        </button>
-      </div>
-
-      <div className="row">
-        <div>
-          <input
-            id="frequency-input"
-            type="number"
-            value={frequency}
-            onChange={(e) =>
-              setFrequency(parseInt(e.currentTarget.value) || 440)
-            }
-            placeholder="Enter frequency..."
-          />
-          <label htmlFor="frequency-input">Custom Frequency (Hz)</label>
-        </div>
-
-        <button
-          type="button"
-          className="custom-btn"
-          onTouchStart={createTouchHandlers(frequency).handleStart}
-          onTouchEnd={createTouchHandlers(frequency).handleEnd}
-          onMouseDown={createTouchHandlers(frequency).handleStart}
-          onMouseUp={createTouchHandlers(frequency).handleEnd}
-          style={{ touchAction: 'none' }}
-        >
-          Play Custom
         </button>
       </div>
     </div>
