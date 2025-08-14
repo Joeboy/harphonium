@@ -5,6 +5,8 @@ interface KeyboardProps {
   onNoteStart: (frequency: number) => void;
   onNoteStop: () => void;
   octaves: number;
+  selectedKey: string;
+  selectedScale: string;
 }
 
 interface KeyData {
@@ -13,8 +15,38 @@ interface KeyData {
   isBlack?: boolean;
 }
 
-const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves }) => {
+const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Define scale patterns (semitone intervals from root note)
+  const scalePatterns = {
+    chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], // All notes
+    pentatonic: [0, 2, 4, 7, 9], // Major pentatonic pattern
+  };
+
+  // Note names in chromatic order
+  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+  // Function to check if a note is in the selected scale
+  const isNoteInScale = (noteName: string): boolean => {
+    if (selectedScale === 'chromatic') return true;
+    
+    // Get the note without octave number
+    const noteWithoutOctave = noteName.replace(/\d+$/, '');
+    
+    // Find the semitone offset from the selected key
+    const keyIndex = noteNames.indexOf(selectedKey);
+    const noteIndex = noteNames.indexOf(noteWithoutOctave);
+    
+    if (keyIndex === -1 || noteIndex === -1) return true; // Fallback to enabled
+    
+    // Calculate the interval from the key
+    const interval = (noteIndex - keyIndex + 12) % 12;
+    
+    // Check if this interval is in the scale pattern
+    const pattern = scalePatterns[selectedScale as keyof typeof scalePatterns] || scalePatterns.chromatic;
+    return pattern.includes(interval);
+  };
 
   // Generate piano keys dynamically based on octaves setting
   const generateKeys = (numOctaves: number): KeyData[] => {
@@ -91,21 +123,24 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves })
       <div className="keyboard">
         {keys.map((key) => {
           const { handleStart, handleEnd } = createTouchHandlers(key.frequency);
+          const inScale = isNoteInScale(key.note);
           const dynamicStyle = {
             flex: key.isBlack ? '0.8' : '1', // Black keys take 80% of white key height
             minHeight: key.isBlack ? '12px' : '15px', // Minimum heights
+            opacity: inScale ? 1 : 0.3, // Dim disabled keys
           };
           
           return (
             <button
               key={key.note}
-              className={`key ${key.isBlack ? 'black-key' : 'white-key'}`}
+              className={`key ${key.isBlack ? 'black-key' : 'white-key'} ${!inScale ? 'disabled' : ''}`}
               style={dynamicStyle}
-              onTouchStart={handleStart}
-              onTouchEnd={handleEnd}
-              onMouseDown={handleStart}
-              onMouseUp={handleEnd}
-              onMouseLeave={handleEnd}
+              onTouchStart={inScale ? handleStart : undefined}
+              onTouchEnd={inScale ? handleEnd : undefined}
+              onMouseDown={inScale ? handleStart : undefined}
+              onMouseUp={inScale ? handleEnd : undefined}
+              onMouseLeave={inScale ? handleEnd : undefined}
+              disabled={!inScale}
             >
               <div className="key-note">{key.note}</div>
             </button>

@@ -104,4 +104,22 @@
     line-height: 1;
 }
 
+.key.disabled {
+    cursor: not-allowed;
+    opacity: 0.3;
+}
+
+.key.disabled:hover {
+    transform: none;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+}
+
+.key.disabled.white-key:hover {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.key.disabled.black-key:hover {
+    background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+}
+
 /* Remove mobile responsive sections since width is always fixed */

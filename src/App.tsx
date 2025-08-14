@@ -13,6 +13,8 @@ function App() {
   const [isAndroid, setIsAndroid] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabType>('info');
   const [octaves, setOctaves] = useState<number>(1.5);
+  const [selectedKey, setSelectedKey] = useState<string>('C');
+  const [selectedScale, setSelectedScale] = useState<string>('chromatic');
 
   useEffect(() => {
     // Detect if we're running on Android
@@ -84,7 +86,14 @@ function App() {
         );
       
       case 'keyboard':
-        return <KeyboardTab octaves={octaves} onOctavesChange={setOctaves} />;
+        return <KeyboardTab 
+          octaves={octaves} 
+          onOctavesChange={setOctaves}
+          selectedKey={selectedKey}
+          onKeyChange={setSelectedKey}
+          selectedScale={selectedScale}
+          onScaleChange={setSelectedScale}
+        />;
 
       case 'synth':
         return <SynthTab />;
@@ -164,7 +173,13 @@ function App() {
       </div>
 
       <div className="right-pane">
-        <Keyboard onNoteStart={playNote} onNoteStop={stopNote} octaves={octaves} />
+        <Keyboard 
+          onNoteStart={playNote} 
+          onNoteStop={stopNote} 
+          octaves={octaves} 
+          selectedKey={selectedKey}
+          selectedScale={selectedScale}
+        />
       </div>
     </div>
   );
