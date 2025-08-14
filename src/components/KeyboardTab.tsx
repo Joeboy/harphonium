@@ -63,8 +63,11 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
         <div className="setting-item">
           <label>Scale</label>
           <select value={selectedScale} onChange={handleScaleChange}>
-            <option value="chromatic">Chromatic (All Notes)</option>
-            <option value="pentatonic">Pentatonic</option>
+            <option value="chromatic">Chromatic</option>
+            <option value="major">Major</option>
+            <option value="minor">Minor</option>
+            <option value="major_pentatonic">Major Pentatonic</option>
+            <option value="minor_pentatonic">Minor Pentatonic</option>
           </select>
         </div>
         <div className="setting-item">

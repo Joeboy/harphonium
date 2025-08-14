@@ -18,34 +18,39 @@ interface KeyData {
 const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Define scale patterns (semitone intervals from root note)
-  const scalePatterns = {
-    chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], // All notes
-    pentatonic: [0, 2, 4, 7, 9], // Major pentatonic pattern
-  };
-
-  // Note names in chromatic order
-  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-  // Function to check if a note is in the selected scale
-  const isNoteInScale = (noteName: string): boolean => {
-    if (selectedScale === 'chromatic') return true;
+  // Check if a note is in the selected scale
+  const isNoteInScale = (note: string, key: string, scale: string): boolean => {
+    if (scale === 'chromatic') return true;
     
-    // Get the note without octave number
-    const noteWithoutOctave = noteName.replace(/\d+$/, '');
+    // Remove octave number from note (e.g., "C4" -> "C")
+    const noteWithoutOctave = note.replace(/\d+$/, '');
     
-    // Find the semitone offset from the selected key
-    const keyIndex = noteNames.indexOf(selectedKey);
-    const noteIndex = noteNames.indexOf(noteWithoutOctave);
+    // Define scale intervals (semitones from root)
+    const scaleIntervals: { [key: string]: number[] } = {
+      'major': [0, 2, 4, 5, 7, 9, 11],
+      'minor': [0, 2, 3, 5, 7, 8, 10],
+      'major_pentatonic': [0, 2, 4, 7, 9],
+      'minor_pentatonic': [0, 3, 5, 7, 10]
+    };
     
-    if (keyIndex === -1 || noteIndex === -1) return true; // Fallback to enabled
+    // Map note names to semitones
+    const noteToSemitone: { [key: string]: number } = {
+      'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+      'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+    };
     
-    // Calculate the interval from the key
-    const interval = (noteIndex - keyIndex + 12) % 12;
+    const intervals = scaleIntervals[scale];
+    if (!intervals) return true; // Fallback to allow all notes
     
-    // Check if this interval is in the scale pattern
-    const pattern = scalePatterns[selectedScale as keyof typeof scalePatterns] || scalePatterns.chromatic;
-    return pattern.includes(interval);
+    const rootSemitone = noteToSemitone[key];
+    const noteSemitone = noteToSemitone[noteWithoutOctave];
+    
+    if (rootSemitone === undefined || noteSemitone === undefined) return true;
+    
+    // Calculate the interval from the key to this note
+    const interval = (noteSemitone - rootSemitone + 12) % 12;
+    
+    return intervals.includes(interval);
   };
 
   // Generate piano keys dynamically based on octaves setting
@@ -100,8 +105,10 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
   const keys = generateKeys(octaves);
 
   // Optimized touch handlers with minimal latency
-  const createTouchHandlers = (freq: number) => {
+  const createTouchHandlers = (freq: number, enabled: boolean) => {
     const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
+      if (!enabled) return; // Don't play if note is disabled
+      
       e.preventDefault(); // Prevent default touch behaviors
       e.stopPropagation(); // Stop event bubbling
 
@@ -110,6 +117,8 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
     };
 
     const handleEnd = (e: React.TouchEvent | React.MouseEvent) => {
+      if (!enabled) return; // Don't process if note is disabled
+      
       e.preventDefault();
       e.stopPropagation();
       setTimeout(() => onNoteStop(), 0);
@@ -122,12 +131,11 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
     <div className="keyboard-container" ref={containerRef}>
       <div className="keyboard">
         {keys.map((key) => {
-          const { handleStart, handleEnd } = createTouchHandlers(key.frequency);
-          const inScale = isNoteInScale(key.note);
+          const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
+          const { handleStart, handleEnd } = createTouchHandlers(key.frequency, inScale);
           const dynamicStyle = {
             flex: key.isBlack ? '0.8' : '1', // Black keys take 80% of white key height
             minHeight: key.isBlack ? '12px' : '15px', // Minimum heights
-            opacity: inScale ? 1 : 0.3, // Dim disabled keys
           };
           
           return (
@@ -135,11 +143,11 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
               key={key.note}
               className={`key ${key.isBlack ? 'black-key' : 'white-key'} ${!inScale ? 'disabled' : ''}`}
               style={dynamicStyle}
-              onTouchStart={inScale ? handleStart : undefined}
-              onTouchEnd={inScale ? handleEnd : undefined}
-              onMouseDown={inScale ? handleStart : undefined}
-              onMouseUp={inScale ? handleEnd : undefined}
-              onMouseLeave={inScale ? handleEnd : undefined}
+              onTouchStart={handleStart}
+              onTouchEnd={handleEnd}
+              onMouseDown={handleStart}
+              onMouseUp={handleEnd}
+              onMouseLeave={handleEnd}
               disabled={!inScale}
             >
               <div className="key-note">{key.note}</div>
