@@ -1,0 +1,211 @@
+/* Keyboard component styles */
+.keyboard-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 250px;
+    height: 100vh;
+    padding: 20px 10px;
+    box-sizing: border-box;
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    border-radius: 15px 0 0 15px;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.keyboard-title {
+    color: #ecf0f1;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.keyboard {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+    height: calc(100vh - 80px);
+    overflow-y: auto;
+    padding: 0 5px;
+
+    /* Custom scrollbar for mobile */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.keyboard::-webkit-scrollbar {
+    width: 4px;
+}
+
+.keyboard::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.keyboard::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.key {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 45px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 500;
+    transition: all 0.1s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+
+    /* Ultra-responsive touch optimizations */
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+}
+
+.white-key {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    color: #2c3e50;
+    border-left: 3px solid #e9ecef;
+}
+
+.white-key:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+.white-key:active {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.black-key {
+    background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+    color: #ffffff;
+    border-left: 3px solid #6c757d;
+    margin: 0 8px;
+    min-height: 35px;
+}
+
+.black-key:hover {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.black-key:active {
+    background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.key-note {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.key-freq {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    font-weight: 400;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .keyboard-container {
+        max-width: 200px;
+        padding: 15px 8px;
+    }
+
+    .keyboard-title {
+        font-size: 1rem;
+        margin-bottom: 15px;
+    }
+
+    .key {
+        min-height: 40px;
+    }
+
+    .black-key {
+        min-height: 30px;
+        margin: 0 6px;
+    }
+
+    .key-note {
+        font-size: 0.8rem;
+    }
+
+    .key-freq {
+        font-size: 0.65rem;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .keyboard-container {
+        max-width: 160px;
+        padding: 10px 6px;
+    }
+
+    .keyboard-title {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+    }
+
+    .key {
+        min-height: 35px;
+    }
+
+    .black-key {
+        min-height: 28px;
+        margin: 0 5px;
+    }
+
+    .key-note {
+        font-size: 0.75rem;
+    }
+
+    .key-freq {
+        font-size: 0.6rem;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (orientation: landscape) and (max-height: 600px) {
+    .keyboard-container {
+        padding: 10px 6px;
+    }
+
+    .keyboard-title {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .key {
+        min-height: 32px;
+    }
+
+    .black-key {
+        min-height: 25px;
+    }
+
+    .key-note {
+        font-size: 0.7rem;
+    }
+
+    .key-freq {
+        font-size: 0.6rem;
+    }
+}

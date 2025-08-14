@@ -369,6 +369,7 @@ case "$1" in
         fi
         
         npm run tauri android build -- --target aarch64 --debug
+        # cargo tauri android build --target aarch64 --debug
         
         if [ $? -eq 0 ]; then
             echo "✅ Build successful!"

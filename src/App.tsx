@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import Keyboard from './components/Keyboard';
 import './App.css';
 
 function App() {
@@ -26,25 +27,6 @@ function App() {
     }
   }, []);
 
-  // Optimized touch handlers with minimal latency
-  const createTouchHandlers = (freq: number) => {
-    const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
-      e.preventDefault(); // Prevent default touch behaviors
-      e.stopPropagation(); // Stop event bubbling
-
-      // Use setTimeout with 0 delay to break out of React's batching for faster execution
-      setTimeout(() => playNote(freq), 0);
-    };
-
-    const handleEnd = (e: React.TouchEvent | React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setTimeout(() => stopNote(), 0);
-    };
-
-    return { handleStart, handleEnd };
-  };
-
   async function playNote(frequency: number) {
     try {
       console.log(`Playing note: ${frequency} Hz`);
@@ -66,51 +48,35 @@ function App() {
   }
 
   return (
-    <div className="container">
-      <h1>SynthMob - Mobile Synthesizer</h1>
+    <div className="app-container">
+      <div className="main-content">
+        <div className="info-panel">
+          <h1>SynthMob</h1>
+          <p className="subtitle">Mobile Synthesizer</p>
 
-      <div className="status">
-        <p>{synthState}</p>
-        <small>
-          {isAndroid
-            ? '⚡ Callback mode audio engine'
-            : '🔄 Desktop callback mode'}
-        </small>
+          <div className="status">
+            <p>{synthState}</p>
+            <small>
+              {isAndroid
+                ? '⚡ Callback mode audio engine'
+                : '🔄 Desktop callback mode'}
+            </small>
+          </div>
+
+          <div className="instructions">
+            <h3>How to Play</h3>
+            <ul>
+              <li>Touch and hold keys to play notes</li>
+              <li>Release to stop the sound</li>
+              <li>Scroll the keyboard for more octaves</li>
+              <li>Each key shows note name and frequency</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
-      <div className="frequency-buttons">
-        <button
-          className="freq-btn"
-          onTouchStart={createTouchHandlers(220).handleStart}
-          onTouchEnd={createTouchHandlers(220).handleEnd}
-          onMouseDown={createTouchHandlers(220).handleStart}
-          onMouseUp={createTouchHandlers(220).handleEnd}
-          style={{ touchAction: 'none' }}
-        >
-          220 Hz
-        </button>
-
-        <button
-          className="freq-btn"
-          onTouchStart={createTouchHandlers(440).handleStart}
-          onTouchEnd={createTouchHandlers(440).handleEnd}
-          onMouseDown={createTouchHandlers(440).handleStart}
-          onMouseUp={createTouchHandlers(440).handleEnd}
-          style={{ touchAction: 'none' }}
-        >
-          440 Hz
-        </button>
-
-        <button
-          className="freq-btn"
-          onTouchStart={createTouchHandlers(880).handleStart}
-          onTouchEnd={createTouchHandlers(880).handleEnd}
-          onMouseDown={createTouchHandlers(880).handleStart}
-          onMouseUp={createTouchHandlers(880).handleEnd}
-          style={{ touchAction: 'none' }}
-        >
-          880 Hz
-        </button>
+      <div className="keyboard-panel">
+        <Keyboard onNoteStart={playNote} onNoteStop={stopNote} />
       </div>
     </div>
   );
