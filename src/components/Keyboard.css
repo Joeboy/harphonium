@@ -82,7 +82,7 @@
     background: linear-gradient(135deg, #495057 0%, #343a40 100%);
     color: #ffffff;
     border-left: 2px solid #6c757d;
-    margin: 0 8px;
+    margin: 0 8px 0 0; /* Align left with gap on right */
 }
 
 .black-key:hover {
