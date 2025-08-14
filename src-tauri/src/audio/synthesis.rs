@@ -104,4 +104,35 @@ impl FunDSPSynth {
 
         self.get_sample()
     }
+
+    /// Play a note at the specified frequency
+    pub fn play_note(&mut self, frequency: f32) {
+        if self.enabled {
+            self.frequency_var.set_value(frequency);
+            self.key_down_var.set_value(1.0); // Gate on - triggers ADSR attack
+        }
+        
+        println!("Playing frequency: {} Hz", frequency);
+    }
+
+    /// Stop the current note
+    pub fn stop_note(&mut self) {
+        if self.enabled {
+            self.key_down_var.set_value(0.0); // Gate off - triggers ADSR release
+        }
+        
+        println!("Stopping audio");
+    }
+
+    /// Get current playing state by checking the ADSR gate
+    pub fn is_playing(&self) -> bool {
+        // The ADSR gate value indicates if we're currently in attack/sustain phase
+        // 1.0 = gate is on (playing), 0.0 = gate is off (releasing or silent)
+        self.key_down_var.value() > 0.0
+    }
+
+    /// Get current frequency from the actual synthesis variable
+    pub fn get_frequency(&self) -> f32 {
+        self.frequency_var.value()
+    }
 }

@@ -1,12 +1,10 @@
 // Desktop audio implementation using cpal with FunDSP integration
 use super::synthesis::FunDSPSynth;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use std::sync::atomic::{AtomicBool, AtomicU32};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
-pub fn initialize_audio_engine(
-    is_playing: Arc<AtomicBool>,
-    frequency_bits: Arc<AtomicU32>,
+pub fn start_audio_stream(
+    synth: Arc<Mutex<FunDSPSynth>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let host = cpal::default_host();
     let device = host
@@ -21,19 +19,18 @@ pub fn initialize_audio_engine(
         "🎵 Desktop audio: {} Hz, {} channels",
         sample_rate, config.channels
     );
-
-    // Create FunDSP synthesizer (error if FunDSP fails)
-    let mut synth = FunDSPSynth::new(sample_rate)?;
     println!("🚀 Desktop audio using FunDSP synthesis (no fallback)");
 
     let stream = device.build_output_stream(
         &config,
         move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-            // Fill buffer with FunDSP samples (playing state handled in pipeline)
-            for frame in data.chunks_mut(config.channels as usize) {
-                let sample = synth.get_sample_from_atomics(is_playing.clone(), frequency_bits.clone());
-                for channel_sample in frame.iter_mut() {
-                    *channel_sample = sample;
+            // Fill buffer with FunDSP samples
+            if let Ok(mut synth_guard) = synth.lock() {
+                for frame in data.chunks_mut(config.channels as usize) {
+                    let sample = synth_guard.get_sample();
+                    for channel_sample in frame.iter_mut() {
+                        *channel_sample = sample;
+                    }
                 }
             }
         },
@@ -50,3 +47,12 @@ pub fn initialize_audio_engine(
 
     Ok(())
 }
+
+// // Legacy function for backwards compatibility
+// pub fn initialize_audio_engine(
+//     _is_playing: std::sync::Arc<std::sync::atomic::AtomicBool>,
+//     _frequency_bits: std::sync::Arc<std::sync::atomic::AtomicU32>,
+// ) -> Result<(), Box<dyn std::error::Error>> {
+//     eprintln!("Warning: initialize_audio_engine is deprecated. Use start_audio_stream instead.");
+//     Ok(())
+// }
