@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import Keyboard from './components/Keyboard';
+import KeyboardTab from './components/KeyboardTab';
 import './App.css';
 
-type TabType = 'info' | 'settings' | 'about';
+type TabType = 'info' | 'keyboard' | 'about';
 
 function App() {
   const [synthState, setSynthState] = useState<string>('');
   const [isAndroid, setIsAndroid] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabType>('info');
+  const [octaves, setOctaves] = useState<number>(1.5);
 
   useEffect(() => {
     // Detect if we're running on Android
@@ -79,38 +81,8 @@ function App() {
           </div>
         );
       
-      case 'settings':
-        return (
-          <div className="tab-content">
-            <h2>Settings</h2>
-            <div className="settings-section">
-              <h3>Audio Settings</h3>
-              <div className="setting-item">
-                <label>Master Volume</label>
-                <input type="range" min="0" max="100" defaultValue="40" />
-              </div>
-              <div className="setting-item">
-                <label>Reverb Amount</label>
-                <input type="range" min="0" max="100" defaultValue="30" />
-              </div>
-            </div>
-            <div className="settings-section">
-              <h3>Keyboard Settings</h3>
-              <div className="setting-item">
-                <label>
-                  <input type="checkbox" defaultChecked />
-                  Show Note Names
-                </label>
-              </div>
-              <div className="setting-item">
-                <label>
-                  <input type="checkbox" defaultChecked />
-                  Show Frequencies
-                </label>
-              </div>
-            </div>
-          </div>
-        );
+      case 'keyboard':
+        return <KeyboardTab octaves={octaves} onOctavesChange={setOctaves} />;
 
       case 'about':
         return (
@@ -154,10 +126,10 @@ function App() {
             Info
           </button>
           <button
-            className={`tab ${activeTab === 'settings' ? 'active' : ''}`}
-            onClick={() => setActiveTab('settings')}
+            className={`tab ${activeTab === 'keyboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('keyboard')}
           >
-            Settings
+            Keyboard
           </button>
           <button
             className={`tab ${activeTab === 'about' ? 'active' : ''}`}
@@ -172,7 +144,7 @@ function App() {
       </div>
 
       <div className="right-pane">
-        <Keyboard onNoteStart={playNote} onNoteStop={stopNote} />
+        <Keyboard onNoteStart={playNote} onNoteStop={stopNote} octaves={octaves} />
       </div>
     </div>
   );

@@ -42,7 +42,6 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 45px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -52,6 +51,7 @@
     transition: all 0.1s ease;
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
     position: relative;
+    flex-shrink: 0; /* Prevent keys from shrinking */
 
     /* Ultra-responsive touch optimizations */
     touch-action: none;
@@ -83,7 +83,6 @@
     color: #ffffff;
     border-left: 2px solid #6c757d;
     margin: 0 8px;
-    min-height: 36px;
 }
 
 .black-key:hover {
