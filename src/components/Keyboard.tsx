@@ -9,6 +9,7 @@ interface KeyboardProps {
   selectedScale: string;
   showNoteNames: boolean;
   transpose: number;
+  displayDisabledNotes: boolean;
 }
 
 interface KeyData {
@@ -17,7 +18,7 @@ interface KeyData {
   isBlack?: boolean;
 }
 
-const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale, showNoteNames, transpose }) => {
+const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale, showNoteNames, transpose, displayDisabledNotes }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Check if a note is in the selected scale
@@ -107,6 +108,11 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
 
   const keys = generateKeys(octaves);
 
+  // Filter keys based on displayDisabledNotes setting
+  const filteredKeys = displayDisabledNotes 
+    ? keys 
+    : keys.filter((key) => isNoteInScale(key.note, selectedKey, selectedScale));
+
   // Optimized touch handlers with minimal latency
   const createTouchHandlers = (freq: number, enabled: boolean) => {
     const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
@@ -133,7 +139,7 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
   return (
     <div className="keyboard-container" ref={containerRef}>
       <div className="keyboard">
-        {keys.map((key) => {
+        {filteredKeys.map((key) => {
           const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
           const { handleStart, handleEnd } = createTouchHandlers(key.frequency, inScale);
           const dynamicStyle = {

@@ -18,6 +18,7 @@ function App() {
     selectedScale: 'chromatic',
     showNoteNames: true,
     transpose: 0,
+    displayDisabledNotes: true,
   });
 
   useEffect(() => {
@@ -182,6 +183,7 @@ function App() {
           selectedScale={scaleSettings.selectedScale}
           showNoteNames={scaleSettings.showNoteNames}
           transpose={scaleSettings.transpose}
+          displayDisabledNotes={scaleSettings.displayDisabledNotes}
         />
       </div>
     </div>

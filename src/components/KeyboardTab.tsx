@@ -9,6 +9,7 @@ interface KeyboardTabProps {
     selectedScale: string;
     showNoteNames: boolean;
     transpose: number;
+    displayDisabledNotes: boolean;
   }) => void;
 }
 
@@ -17,10 +18,11 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
   onOctavesChange,
   onScaleSettingsChange,
 }) => {
-  const [selectedKey, setSelectedKey] = useState<string>('C');
-  const [selectedScale, setSelectedScale] = useState<string>('chromatic');
-  const [showNoteNames, setShowNoteNames] = useState<boolean>(true);
-  const [transpose, setTranspose] = useState<number>(0);
+  const [selectedKey, setSelectedKey] = useState('C');
+  const [selectedScale, setSelectedScale] = useState('chromatic');
+  const [showNoteNames, setShowNoteNames] = useState(true);
+  const [transpose, setTranspose] = useState(0);
+  const [displayDisabledNotes, setDisplayDisabledNotes] = useState(true);
 
   const handleOctavesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onOctavesChange(parseFloat(e.target.value));
@@ -34,6 +36,7 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
       selectedScale,
       showNoteNames,
       transpose,
+      displayDisabledNotes,
     });
   };
 
@@ -45,6 +48,7 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
       selectedScale: newScale,
       showNoteNames,
       transpose,
+      displayDisabledNotes,
     });
   };
 
@@ -56,6 +60,19 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
       selectedScale,
       showNoteNames: newShowNoteNames,
       transpose,
+      displayDisabledNotes,
+    });
+  };
+
+  const handleDisplayDisabledNotesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDisplayDisabledNotes = e.target.checked;
+    setDisplayDisabledNotes(newDisplayDisabledNotes);
+    onScaleSettingsChange({
+      selectedKey,
+      selectedScale,
+      showNoteNames,
+      transpose,
+      displayDisabledNotes: newDisplayDisabledNotes,
     });
   };
 
@@ -66,7 +83,8 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
       selectedKey,
       selectedScale,
       showNoteNames,
-      transpose: newTranspose
+      transpose: newTranspose,
+      displayDisabledNotes,
     });
   };
 
@@ -77,7 +95,8 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
       selectedKey,
       selectedScale,
       showNoteNames,
-      transpose: newTranspose
+      transpose: newTranspose,
+      displayDisabledNotes,
     });
   };
 
@@ -89,7 +108,8 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
       selectedKey,
       selectedScale,
       showNoteNames,
-      transpose: newTranspose
+      transpose: newTranspose,
+      displayDisabledNotes,
     });
   };
 
@@ -101,7 +121,8 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
       selectedKey,
       selectedScale,
       showNoteNames,
-      transpose: newTranspose
+      transpose: newTranspose,
+      displayDisabledNotes,
     });
   };
 
@@ -153,6 +174,16 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
               onChange={handleShowNoteNamesChange}
             />
             Show Note Names
+          </label>
+        </div>
+        <div className="setting-item">
+          <label>
+            <input 
+              type="checkbox" 
+              checked={displayDisabledNotes}
+              onChange={handleDisplayDisabledNotesChange}
+            />
+            Display Disabled Notes
           </label>
         </div>
         <div className="setting-item">
