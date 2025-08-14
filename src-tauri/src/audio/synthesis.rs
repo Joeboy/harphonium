@@ -13,8 +13,6 @@ pub struct FunDSPSynth {
     frequency_var: shared::Shared,
     /// Key down state control (0.0 = key up/silent, 1.0 = key down/playing) - used as ADSR gate
     key_down_var: shared::Shared,
-    /// Current frequency for frequency change detection
-    current_frequency: f64,
     /// Sample rate for proper delay calculation
     sample_rate: f32,
     /// Whether FunDSP is enabled (can be disabled if panics occur)
@@ -39,7 +37,7 @@ impl FunDSPSynth {
                 >> sine()
                 >> (pass() * (var(&key_down_var) >> adsr_envelope))
                 >> split()
-                >> (pass() + delay(0.5) * 0.3)
+                >> (pass() + delay(0.3) * 0.3)
                 >> join(),
         );
 
@@ -53,7 +51,6 @@ impl FunDSPSynth {
             synth,
             frequency_var,
             key_down_var,
-            current_frequency: 440.0,
             sample_rate,
             enabled: true,
         })
@@ -98,13 +95,9 @@ impl FunDSPSynth {
         let frequency_bits_val = frequency_bits.load(Ordering::Relaxed);
         let frequency = f32::from_bits(frequency_bits_val);
 
-        // Update frequency if it has changed (and synth is enabled)
+        // Update frequency directly (UI controls the frequency changes)
         if self.enabled {
-            let new_freq = frequency as f64;
-            if (new_freq - self.current_frequency).abs() > 0.1 {
-                self.current_frequency = new_freq;
-                self.frequency_var.set_value(frequency);
-            }
+            self.frequency_var.set_value(frequency);
         }
 
         self.get_sample()
