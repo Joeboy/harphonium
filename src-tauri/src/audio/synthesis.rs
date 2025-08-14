@@ -25,7 +25,7 @@ impl FunDSPSynth {
     pub fn new(sample_rate: f32) -> Result<Self, Box<dyn std::error::Error>> {
         // Create shared variables for frequency and playing state
         let frequency_var = shared(440.0);
-        let playing_var = shared(1.0); // 1.0 = playing, 0.0 = silent (also used as ADSR gate)
+        let playing_var = shared(0.0); // 0.0 = silent, 1.0 = playing (also used as ADSR gate)
 
         // ADSR parameters: Attack=0.1s, Decay=0.2s, Sustain=0.6, Release=0.3s
         let adsr_envelope = adsr_live(0.02, 0.2, 0.6, 0.3);
