@@ -32,13 +32,15 @@ impl FunDSPSynth {
         // 1. Generate sine wave
         // 2. Apply ADSR envelope (controlled by key_down_var as gate)
         // 3. Add delay effect
+        // 4. Apply final gain/volume control
         let mut synth = Box::new(
             var(&frequency_var)
                 >> sine()
                 >> (pass() * (var(&key_down_var) >> adsr_envelope))
                 >> split()
                 >> (pass() + delay(0.3) * 0.3)
-                >> join(),
+                >> join()
+                >> mul(0.4), // Final gain
         );
 
         // Set the correct sample rate for the synthesizer
@@ -69,7 +71,7 @@ impl FunDSPSynth {
             let output = result as f32;
             // Safety: ensure output is finite and in valid range
             if output.is_finite() && output.abs() <= 1.0 {
-                output * 0.4 // Apply volume scaling (reduced for delay effect)
+                output
             } else {
                 0.0 // Safety fallback
             }
