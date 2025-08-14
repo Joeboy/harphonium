@@ -142,9 +142,11 @@ impl FunDSPSynth {
     pub fn set_sample_rate(&mut self, sample_rate: f32) {
         if sample_rate > 0.0 {
             self.sample_rate = sample_rate;
-            self.synth.set_sample_rate(sample_rate as f64);
-            self.synth.reset();
+            self.backend.set_sample_rate(sample_rate as f64);
+            self.backend.reset();
         }
+    }
+
     /// Switch to a new waveform using dynamic Net replacement
     pub fn set_waveform(&mut self, new_waveform: Waveform) {
         if new_waveform == self.current_waveform || !self.enabled {
@@ -174,29 +176,11 @@ impl FunDSPSynth {
         }
 
         // Fast path: direct sample fetch and clamp
-        let output = self.synth.get_mono();
+        let output = self.backend.get_mono();
         if output.is_finite() {
             output.clamp(-1.0, 1.0)
         } else {
             0.0
-        // Try to get a sample from the backend
-        let result =
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.backend.get_mono()));
-
-        match result {
-            Ok(output) => {
-                // Safety: ensure output is finite and in valid range
-                if output.is_finite() && output.abs() <= 1.0 {
-                    output
-                } else {
-                    0.0 // Safety fallback
-                }
-            }
-            Err(_) => {
-                // If FunDSP panics, disable it for this instance
-                self.enabled = false;
-                0.0
-            }
         }
     }
 
