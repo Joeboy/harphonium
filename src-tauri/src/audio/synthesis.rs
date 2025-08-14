@@ -93,10 +93,10 @@ impl FunDSPSynth {
     /// Generate a single sample with atomic controls (for Android callback)
     pub fn get_sample_from_atomics(
         &mut self,
-        is_playing: Arc<AtomicBool>,
+        key_down: Arc<AtomicBool>,
         frequency_bits: Arc<AtomicU32>,
     ) -> f32 {
-        let currently_playing = is_playing.load(Ordering::Relaxed);
+        let currently_playing = key_down.load(Ordering::Relaxed);
 
         // Update playing state - this now directly controls both audio gating and ADSR envelope
         let playing = if currently_playing { 1.0 } else { 0.0 };
