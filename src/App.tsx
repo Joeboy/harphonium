@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import Keyboard from './components/Keyboard';
 import KeyboardTab from './components/KeyboardTab';
+import SynthTab from './components/SynthTab';
+import EffectsTab from './components/EffectsTab';
 import './App.css';
 
-type TabType = 'info' | 'keyboard' | 'about';
+type TabType = 'info' | 'keyboard' | 'synth' | 'effects' | 'about';
 
 function App() {
   const [synthState, setSynthState] = useState<string>('');
@@ -84,6 +86,12 @@ function App() {
       case 'keyboard':
         return <KeyboardTab octaves={octaves} onOctavesChange={setOctaves} />;
 
+      case 'synth':
+        return <SynthTab />;
+
+      case 'effects':
+        return <EffectsTab />;
+
       case 'about':
         return (
           <div className="tab-content">
@@ -130,6 +138,18 @@ function App() {
             onClick={() => setActiveTab('keyboard')}
           >
             Keyboard
+          </button>
+          <button
+            className={`tab ${activeTab === 'synth' ? 'active' : ''}`}
+            onClick={() => setActiveTab('synth')}
+          >
+            Synth
+          </button>
+          <button
+            className={`tab ${activeTab === 'effects' ? 'active' : ''}`}
+            onClick={() => setActiveTab('effects')}
+          >
+            Effects
           </button>
           <button
             className={`tab ${activeTab === 'about' ? 'active' : ''}`}
