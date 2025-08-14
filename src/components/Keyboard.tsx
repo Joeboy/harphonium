@@ -7,6 +7,7 @@ interface KeyboardProps {
   octaves: number;
   selectedKey: string;
   selectedScale: string;
+  showNoteNames: boolean;
 }
 
 interface KeyData {
@@ -15,7 +16,7 @@ interface KeyData {
   isBlack?: boolean;
 }
 
-const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale }) => {
+const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale, showNoteNames }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Check if a note is in the selected scale
@@ -150,7 +151,7 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
               onMouseLeave={handleEnd}
               disabled={!inScale}
             >
-              <div className="key-note">{key.note}</div>
+              {showNoteNames && <div className="key-note">{key.note}</div>}
             </button>
           );
         })}

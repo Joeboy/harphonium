@@ -1,33 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './KeyboardTab.css';
 
 interface KeyboardTabProps {
   octaves: number;
   onOctavesChange: (octaves: number) => void;
-  selectedKey: string;
-  onKeyChange: (key: string) => void;
-  selectedScale: string;
-  onScaleChange: (scale: string) => void;
+  onScaleSettingsChange: (settings: {
+    selectedKey: string;
+    selectedScale: string;
+    showNoteNames: boolean;
+  }) => void;
 }
 
 const KeyboardTab: React.FC<KeyboardTabProps> = ({
   octaves,
   onOctavesChange,
-  selectedKey,
-  onKeyChange,
-  selectedScale,
-  onScaleChange,
+  onScaleSettingsChange,
 }) => {
+  const [selectedKey, setSelectedKey] = useState<string>('C');
+  const [selectedScale, setSelectedScale] = useState<string>('chromatic');
+  const [showNoteNames, setShowNoteNames] = useState<boolean>(true);
+
   const handleOctavesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onOctavesChange(parseFloat(e.target.value));
   };
 
   const handleKeyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onKeyChange(e.target.value);
+    const newKey = e.target.value;
+    setSelectedKey(newKey);
+    onScaleSettingsChange({
+      selectedKey: newKey,
+      selectedScale,
+      showNoteNames,
+    });
   };
 
   const handleScaleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onScaleChange(e.target.value);
+    const newScale = e.target.value;
+    setSelectedScale(newScale);
+    onScaleSettingsChange({
+      selectedKey,
+      selectedScale: newScale,
+      showNoteNames,
+    });
+  };
+
+  const handleShowNoteNamesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newShowNoteNames = e.target.checked;
+    setShowNoteNames(newShowNoteNames);
+    onScaleSettingsChange({
+      selectedKey,
+      selectedScale,
+      showNoteNames: newShowNoteNames,
+    });
   };
 
   return (
@@ -72,7 +96,11 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
         </div>
         <div className="setting-item">
           <label>
-            <input type="checkbox" defaultChecked />
+            <input 
+              type="checkbox" 
+              checked={showNoteNames}
+              onChange={handleShowNoteNamesChange}
+            />
             Show Note Names
           </label>
         </div>
