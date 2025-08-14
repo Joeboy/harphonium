@@ -104,6 +104,17 @@ case "$1" in
         TARGET=${2:-"aarch64"}
         echo "Building Android APK for target: $TARGET (debug)..."
         echo "Available targets: aarch64 (ARM64), armv7 (ARM32), i686 (x86), x86_64"
+        echo "Current CARGO_TARGET_DIR: $CARGO_TARGET_DIR"
+        
+        # Ensure environment is properly loaded for the build
+        if [ -f .env ]; then
+            echo "Loading environment from .env file..."
+            # Source the .env file properly, expanding variables
+            set -a
+            source .env
+            set +a
+            echo "CARGO_TARGET_DIR now set to: $CARGO_TARGET_DIR"
+        fi
         
         # Clean old builds to ensure fresh APK
         echo "🧹 Cleaning previous builds..."
@@ -345,6 +356,18 @@ case "$1" in
         echo ""
         
         echo "Step 2: Building APK for real device..."
+        echo "Current CARGO_TARGET_DIR: $CARGO_TARGET_DIR"
+        
+        # Ensure environment is properly loaded for the build
+        if [ -f .env ]; then
+            echo "Loading environment from .env file..."
+            # Source the .env file properly, expanding variables
+            set -a
+            source .env
+            set +a
+            echo "CARGO_TARGET_DIR now set to: $CARGO_TARGET_DIR"
+        fi
+        
         npm run tauri android build -- --target aarch64 --debug
         
         if [ $? -eq 0 ]; then
