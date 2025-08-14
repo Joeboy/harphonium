@@ -23,31 +23,34 @@ pub struct FunDSPSynth {
 
 impl FunDSPSynth {
     pub fn new(sample_rate: f32) -> Result<Self, Box<dyn std::error::Error>> {
-        // Create shared variables for frequency, key down state, and master volume
         let frequency_var = shared(440.0);
         let key_down_var = shared(0.0); // 0.0 = key up/silent, 1.0 = key down/playing
         let master_volume_var = shared(0.7); // Default to 70% volume
 
-        // ADSR parameters: Attack=0.1s, Decay=0.2s, Sustain=0.6, Release=0.3s
-        let adsr_envelope = adsr_live(0.02, 0.2, 0.6, 0.3);
+        let adsr_envelope2 = adsr_live(0.02, 0.2, 0.6, 0.3);
 
-        // Synthesis pipeline with ADSR envelope and master volume:
-        // 1. Generate sine wave
-        // 2. Apply ADSR envelope (controlled by key_down_var as gate)
-        // 3. Add delay effect
-        // 4. Apply base gain, then master volume
-        let mut synth = Box::new(
-            var(&frequency_var)
-                >> sine()
-                >> (pass() * (var(&key_down_var) >> adsr_envelope))
-                >> split()
-                >> (pass() + delay(0.3) * 0.3)
-                >> join()
-                >> mul(0.4) // Base gain
-                >> (pass() * var(&master_volume_var)), // Master volume control
-        );
+        let mut net = Net::new(0, 1);
 
-        // Set the correct sample rate for the synthesizer
+        let freq_dc_id = net.push(Box::new(var(&frequency_var)));
+        let sine_id = net.push(Box::new(sine()));
+        net.pipe_all(freq_dc_id, sine_id);
+
+        let adsr_id = net.push(Box::new(pass() * (var(&key_down_var) >> adsr_envelope2)));
+        net.pipe_all(sine_id, adsr_id);
+
+        let tail = split()
+            >> (pass() + delay(0.3) * 0.3)
+            >> join()
+            >> mul(0.4)
+            >> (pass() * var(&master_volume_var));
+
+        let tail_id = net.push(Box::new(tail));
+        net.pipe_all(adsr_id, tail_id);
+
+        net.pipe_output(tail_id);
+
+        let backend = net.backend();
+        let mut synth = Box::new(backend);
         synth.set_sample_rate(sample_rate as f64);
         synth.reset();
 
@@ -70,9 +73,8 @@ impl FunDSPSynth {
         }
 
         // Try to get a sample from the synthesizer
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            self.synth.get_mono()
-        }));
+        let result =
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.synth.get_mono()));
 
         match result {
             Ok(output) => {
@@ -82,7 +84,7 @@ impl FunDSPSynth {
                 } else {
                     0.0 // Safety fallback
                 }
-            },
+            }
             Err(_) => {
                 // If FunDSP panics, disable it for this instance
                 self.enabled = false;
@@ -120,7 +122,7 @@ impl FunDSPSynth {
             self.frequency_var.set_value(frequency);
             self.key_down_var.set_value(1.0); // Gate on - triggers ADSR attack
         }
-        
+
         println!("Playing frequency: {} Hz", frequency);
     }
 
@@ -129,7 +131,7 @@ impl FunDSPSynth {
         if self.enabled {
             self.key_down_var.set_value(0.0); // Gate off - triggers ADSR release
         }
-        
+
         println!("Stopping audio");
     }
 
@@ -149,7 +151,7 @@ impl FunDSPSynth {
     pub fn set_master_volume(&mut self, volume: f32) {
         // Clamp volume to valid range
         let clamped_volume = volume.clamp(0.0, 1.0);
-        
+
         if self.enabled {
             self.master_volume_var.set_value(clamped_volume);
         }
