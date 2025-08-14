@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 
 // Shared synthesis module using FunDSP
 mod synthesis;
-use synthesis::FunDSPSynth;
+use synthesis::{FunDSPSynth, Waveform};
 
 // Desktop audio implementation using cpal
 #[cfg(not(target_os = "android"))]
@@ -86,6 +86,25 @@ impl AudioEngine {
             0.7 // Default volume
         }
     }
+
+    /// Set the current waveform
+    pub fn set_waveform(&self, waveform: Waveform) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.set_waveform(waveform);
+            Ok(())
+        } else {
+            Err("Failed to acquire synth lock".to_string())
+        }
+    }
+
+    /// Get the current waveform
+    pub fn get_waveform(&self) -> Waveform {
+        if let Ok(synth) = self.synth.lock() {
+            synth.get_waveform()
+        } else {
+            Waveform::default()
+        }
+    }
 }
 
 // Global audio engine
@@ -144,5 +163,34 @@ pub fn get_master_volume() -> f32 {
         engine.get_master_volume()
     } else {
         0.7 // Default volume
+    }
+}
+
+/// Set the current waveform
+pub fn set_waveform(waveform_str: &str) -> Result<(), String> {
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
+    // Convert string to Waveform enum
+    let waveform = match Waveform::from_str(waveform_str) {
+        Some(w) => w,
+        None => return Err(format!("Invalid waveform: {}", waveform_str)),
+    };
+
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.set_waveform(waveform)
+    } else {
+        Err("Audio engine not initialized".to_string())
+    }
+}
+
+/// Get the current waveform as a string
+pub fn get_waveform() -> String {
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.get_waveform().as_str().to_string()
+    } else {
+        Waveform::default().as_str().to_string()
     }
 }

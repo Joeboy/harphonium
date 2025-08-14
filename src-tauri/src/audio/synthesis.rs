@@ -5,10 +5,62 @@ use fundsp::hacker::*;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 
+/// Waveform types available in the synthesizer
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Waveform {
+    Sine,
+    Square,
+    Sawtooth,
+    Triangle,
+}
+
+impl Default for Waveform {
+    fn default() -> Self {
+        Waveform::Sine
+    }
+}
+
+impl Waveform {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Waveform::Sine => "sine",
+            Waveform::Square => "square", 
+            Waveform::Sawtooth => "sawtooth",
+            Waveform::Triangle => "triangle",
+        }
+    }
+
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "sine" => Some(Waveform::Sine),
+            "square" => Some(Waveform::Square),
+            "sawtooth" => Some(Waveform::Sawtooth),
+            "triangle" => Some(Waveform::Triangle),
+            _ => None,
+        }
+    }
+
+    /// Create the appropriate oscillator for this waveform
+    fn create_oscillator(&self) -> Box<dyn AudioUnit + Send> {
+        match self {
+            Waveform::Sine => Box::new(sine()),
+            Waveform::Square => Box::new(square()),
+            Waveform::Sawtooth => Box::new(saw()),
+            Waveform::Triangle => Box::new(triangle()),
+        }
+    }
+}
+
 /// FunDSP-based synthesizer that can be shared across platforms
 pub struct FunDSPSynth {
-    /// FunDSP synthesis chain with delay effect and ADSR envelope
-    synth: Box<dyn AudioUnit + Send>,
+    /// FunDSP Net frontend for dynamic modifications
+    net: Net,
+    /// FunDSP backend for audio processing
+    backend: Box<dyn AudioUnit + Send>,
+    /// ID of the oscillator node in the net
+    oscillator_id: NodeId,
+    /// Current waveform selection
+    current_waveform: Waveform,
     /// Frequency control for the oscillator
     frequency_var: shared::Shared,
     /// Key down state control (0.0 = key up/silent, 1.0 = key down/playing) - used as ADSR gate
@@ -31,12 +83,16 @@ impl FunDSPSynth {
 
         let mut net = Net::new(0, 1);
 
+        // Create the synthesis chain dynamically
         let freq_dc_id = net.push(Box::new(var(&frequency_var)));
-        let sine_id = net.push(Box::new(sine()));
-        net.pipe_all(freq_dc_id, sine_id);
+        
+        // Start with sine wave as default
+        let current_waveform = Waveform::default();
+        let oscillator_id = net.push(current_waveform.create_oscillator());
+        net.pipe_all(freq_dc_id, oscillator_id);
 
         let adsr_id = net.push(Box::new(pass() * (var(&key_down_var) >> adsr_envelope2)));
-        net.pipe_all(sine_id, adsr_id);
+        net.pipe_all(oscillator_id, adsr_id);
 
         let tail = split()
             >> (pass() + delay(0.3) * 0.3)
@@ -49,15 +105,18 @@ impl FunDSPSynth {
 
         net.pipe_output(tail_id);
 
-        let backend = net.backend();
-        let mut synth = Box::new(backend);
-        synth.set_sample_rate(sample_rate as f64);
-        synth.reset();
+        let mut backend = net.backend();
+        backend.set_sample_rate(sample_rate as f64);
+        backend.reset();
 
-        println!("🎵 FunDSP initialized at {} Hz sample rate", sample_rate);
+        println!("🎵 FunDSP initialized at {} Hz sample rate with {} waveform", 
+                 sample_rate, current_waveform.as_str());
 
         Ok(FunDSPSynth {
-            synth,
+            net,
+            backend: Box::new(backend),
+            oscillator_id,
+            current_waveform,
             frequency_var,
             key_down_var,
             master_volume_var,
@@ -86,6 +145,26 @@ impl FunDSPSynth {
             self.synth.set_sample_rate(sample_rate as f64);
             self.synth.reset();
         }
+    /// Switch to a new waveform using dynamic Net replacement
+    pub fn set_waveform(&mut self, new_waveform: Waveform) {
+        if new_waveform == self.current_waveform || !self.enabled {
+            return; // No change needed
+        }
+
+        // Replace the oscillator node with the new waveform
+        self.net.replace(self.oscillator_id, new_waveform.create_oscillator());
+        
+        // Commit the changes to the backend
+        self.net.commit();
+        
+        self.current_waveform = new_waveform;
+
+        println!("🔄 Switched to {} waveform using Net.replace()", new_waveform.as_str());
+    }
+
+    /// Get the current waveform
+    pub fn get_waveform(&self) -> Waveform {
+        self.current_waveform
     }
 
     /// Generate a single mono sample
@@ -100,6 +179,24 @@ impl FunDSPSynth {
             output.clamp(-1.0, 1.0)
         } else {
             0.0
+        // Try to get a sample from the backend
+        let result =
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.backend.get_mono()));
+
+        match result {
+            Ok(output) => {
+                // Safety: ensure output is finite and in valid range
+                if output.is_finite() && output.abs() <= 1.0 {
+                    output
+                } else {
+                    0.0 // Safety fallback
+                }
+            }
+            Err(_) => {
+                // If FunDSP panics, disable it for this instance
+                self.enabled = false;
+                0.0
+            }
         }
     }
 
@@ -170,5 +267,50 @@ impl FunDSPSynth {
     /// Get current master volume
     pub fn get_master_volume(&self) -> f32 {
         self.master_volume_var.value()
+    }
+
+    /// Test function to verify dynamic waveform switching works
+    #[cfg(test)]
+    pub fn test_waveform_switching(&mut self) {
+        println!("🧪 Testing dynamic waveform switching...");
+        
+        // Test switching between all waveforms
+        let waveforms = [Waveform::Sine, Waveform::Square, Waveform::Sawtooth, Waveform::Triangle];
+        
+        for waveform in waveforms.iter() {
+            self.set_waveform(*waveform);
+            assert_eq!(self.get_waveform(), *waveform);
+            println!("✅ Successfully switched to {}", waveform.as_str());
+            
+            // Generate a few samples to ensure it works
+            for _ in 0..10 {
+                let _sample = self.get_sample();
+            }
+        }
+        
+        println!("🎉 All waveform switches successful!");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_waveform_enum() {
+        assert_eq!(Waveform::Sine.as_str(), "sine");
+        assert_eq!(Waveform::Square.as_str(), "square");
+        assert_eq!(Waveform::Sawtooth.as_str(), "sawtooth");
+        assert_eq!(Waveform::Triangle.as_str(), "triangle");
+        
+        assert_eq!(Waveform::from_str("sine"), Some(Waveform::Sine));
+        assert_eq!(Waveform::from_str("SQUARE"), Some(Waveform::Square));
+        assert_eq!(Waveform::from_str("invalid"), None);
+    }
+
+    #[test]
+    fn test_dynamic_waveform_switching() {
+        let mut synth = FunDSPSynth::new(44100.0).expect("Failed to create synth");
+        synth.test_waveform_switching();
     }
 }

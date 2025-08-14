@@ -16,17 +16,22 @@ const SynthTab: React.FC<SynthTabProps> = () => {
   const [filterResonance, setFilterResonance] = useState(0.5);
   const [masterVolume, setMasterVolume] = useState(70);
 
-  // Load initial master volume on component mount
+  // Load initial values on component mount
   useEffect(() => {
-    const loadMasterVolume = async () => {
+    const loadInitialValues = async () => {
       try {
+        // Load master volume
         const volume: number = await invoke('get_master_volume');
         setMasterVolume(Math.round(volume * 100)); // Convert from 0-1 to 0-100 for UI
+        
+        // Load current waveform
+        const waveform: string = await invoke('get_waveform');
+        setOscillatorType(waveform as 'sine' | 'square' | 'sawtooth' | 'triangle');
       } catch (error) {
-        console.error('Failed to get master volume:', error);
+        console.error('Failed to load initial values:', error);
       }
     };
-    loadMasterVolume();
+    loadInitialValues();
   }, []);
 
   // Handle master volume changes
@@ -36,6 +41,17 @@ const SynthTab: React.FC<SynthTabProps> = () => {
       await invoke('set_master_volume', { volume: value / 100 }); // Convert from 0-100 to 0-1
     } catch (error) {
       console.error('Failed to set master volume:', error);
+    }
+  };
+
+  // Handle waveform changes
+  const handleWaveformChange = async (waveform: 'sine' | 'square' | 'sawtooth' | 'triangle') => {
+    setOscillatorType(waveform);
+    try {
+      await invoke('set_waveform', { waveform });
+      console.log(`Waveform changed to: ${waveform}`);
+    } catch (error) {
+      console.error('Failed to set waveform:', error);
     }
   };
 
@@ -65,7 +81,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
           <select
             id="oscillator-type"
             value={oscillatorType}
-            onChange={(e) => setOscillatorType(e.target.value as any)}
+            onChange={(e) => handleWaveformChange(e.target.value as 'sine' | 'square' | 'sawtooth' | 'triangle')}
           >
             <option value="sine">Sine</option>
             <option value="square">Square</option>

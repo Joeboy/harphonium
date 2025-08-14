@@ -30,6 +30,16 @@ async fn get_master_volume() -> f32 {
     audio::get_master_volume()
 }
 
+#[tauri::command]
+async fn set_waveform(waveform: String) -> Result<(), String> {
+    audio::set_waveform(&waveform)
+}
+
+#[tauri::command]
+async fn get_waveform() -> String {
+    audio::get_waveform()
+}
+
 fn main() {
     // Initialize audio engine
     if let Err(e) = audio::initialize_audio() {
@@ -42,7 +52,9 @@ fn main() {
             play_note, 
             stop_note,
             set_master_volume,
-            get_master_volume
+            get_master_volume,
+            set_waveform,
+            get_waveform
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
