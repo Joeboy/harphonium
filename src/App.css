@@ -1,0 +1,267 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+
+  /* Ultra-low latency touch optimizations */
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+/* Main app container - full screen split layout */
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Left pane - tabbed interface */
+.left-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #1a1a1a;
+  border-right: 2px solid #333;
+  min-width: 0; /* Allow shrinking */
+}
+
+/* Right pane - keyboard - always fixed 150px width */
+.right-pane {
+  width: 150px;
+  min-width: 150px;
+  max-width: 150px;
+  display: flex;
+  background: #2a2a2a;
+  flex-shrink: 0; /* Never shrink */
+}
+
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  background: #333;
+  border-bottom: 2px solid #444;
+}
+
+.tab {
+  flex: 1;
+  padding: 15px 20px;
+  background: #333;
+  color: #ccc;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-right: 1px solid #444;
+}
+
+.tab:last-child {
+  border-right: none;
+}
+
+.tab:hover {
+  background: #444;
+  color: #fff;
+}
+
+.tab.active {
+  background: #646cff;
+  color: #fff;
+}
+
+/* Tab content container */
+.tab-content-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.tab-content {
+  padding: 30px;
+  max-width: 100%;
+}
+
+/* Typography */
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  color: #fff;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #fff;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+  color: #ccc;
+  font-weight: 500;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #aaa;
+  margin-bottom: 30px;
+  font-weight: 300;
+}
+
+/* Status display */
+.status {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #2a2a2a;
+  border-radius: 10px;
+  border: 1px solid #444;
+}
+
+.status p {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.status small {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+/* Instructions and content */
+.instructions {
+  margin-top: 30px;
+}
+
+.instructions ul, .about-section ul {
+  list-style-position: inside;
+  margin-left: 0;
+  color: #ccc;
+  line-height: 1.6;
+}
+
+.instructions li, .about-section li {
+  margin-bottom: 8px;
+}
+
+/* Settings styles */
+.settings-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #2a2a2a;
+  border-radius: 10px;
+  border: 1px solid #444;
+}
+
+.setting-item {
+  margin-bottom: 20px;
+}
+
+.setting-item label {
+  display: block;
+  margin-bottom: 8px;
+  color: #ccc;
+  font-weight: 500;
+}
+
+.setting-item input[type="range"] {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #444;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.setting-item input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #646cff;
+  cursor: pointer;
+}
+
+.setting-item input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #646cff;
+  cursor: pointer;
+  border: none;
+}
+
+.setting-item input[type="checkbox"] {
+  margin-right: 10px;
+  transform: scale(1.2);
+}
+
+/* About section */
+.about-section {
+  margin-bottom: 25px;
+}
+
+.about-section p {
+  color: #ccc;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+/* Mobile responsive design - keep horizontal layout */
+@media (max-width: 768px) {
+  .tab-content {
+    padding: 20px;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab {
+    padding: 12px 15px;
+    font-size: 0.9rem;
+  }
+  
+  .tab-content {
+    padding: 15px;
+  }
+  
+  h1 {
+    font-size: 1.8rem;
+  }
+}

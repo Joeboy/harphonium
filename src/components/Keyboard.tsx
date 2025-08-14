@@ -75,24 +75,20 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop }) => {
 
   return (
     <div className="keyboard-container">
-      <h3 className="keyboard-title">Keyboard</h3>
       <div className="keyboard">
         {keys.map((key) => {
-          const handlers = createTouchHandlers(key.frequency);
+          const { handleStart, handleEnd } = createTouchHandlers(key.frequency);
           return (
             <button
               key={key.note}
               className={`key ${key.isBlack ? 'black-key' : 'white-key'}`}
-              onTouchStart={handlers.handleStart}
-              onTouchEnd={handlers.handleEnd}
-              onMouseDown={handlers.handleStart}
-              onMouseUp={handlers.handleEnd}
-              onMouseLeave={handlers.handleEnd} // Stop note if mouse leaves button
-              style={{ touchAction: 'none' }}
-              aria-label={`${key.note} - ${key.frequency} Hz`}
+              onTouchStart={handleStart}
+              onTouchEnd={handleEnd}
+              onMouseDown={handleStart}
+              onMouseUp={handleEnd}
+              onMouseLeave={handleEnd}
             >
-              <span className="key-note">{key.note}</span>
-              <span className="key-freq">{Math.round(key.frequency)}Hz</span>
+              <div className="key-note">{key.note}</div>
             </button>
           );
         })}

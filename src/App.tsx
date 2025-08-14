@@ -3,9 +3,12 @@ import { invoke } from '@tauri-apps/api/core';
 import Keyboard from './components/Keyboard';
 import './App.css';
 
+type TabType = 'info' | 'settings' | 'about';
+
 function App() {
   const [synthState, setSynthState] = useState<string>('');
   const [isAndroid, setIsAndroid] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<TabType>('info');
 
   useEffect(() => {
     // Detect if we're running on Android
@@ -47,35 +50,128 @@ function App() {
     }
   }
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'info':
+        return (
+          <div className="tab-content">
+            <h1>SynthMob</h1>
+            <p className="subtitle">Mobile Synthesizer</p>
+
+            <div className="status">
+              <p>{synthState}</p>
+              <small>
+                {isAndroid
+                  ? '⚡ Callback mode audio engine'
+                  : '🔄 Desktop callback mode'}
+              </small>
+            </div>
+
+            <div className="instructions">
+              <h3>How to Play</h3>
+              <ul>
+                <li>Touch and hold keys to play notes</li>
+                <li>Release to stop the sound</li>
+                <li>Scroll the keyboard for more octaves</li>
+                <li>Each key shows note name and frequency</li>
+              </ul>
+            </div>
+          </div>
+        );
+      
+      case 'settings':
+        return (
+          <div className="tab-content">
+            <h2>Settings</h2>
+            <div className="settings-section">
+              <h3>Audio Settings</h3>
+              <div className="setting-item">
+                <label>Master Volume</label>
+                <input type="range" min="0" max="100" defaultValue="40" />
+              </div>
+              <div className="setting-item">
+                <label>Reverb Amount</label>
+                <input type="range" min="0" max="100" defaultValue="30" />
+              </div>
+            </div>
+            <div className="settings-section">
+              <h3>Keyboard Settings</h3>
+              <div className="setting-item">
+                <label>
+                  <input type="checkbox" defaultChecked />
+                  Show Note Names
+                </label>
+              </div>
+              <div className="setting-item">
+                <label>
+                  <input type="checkbox" defaultChecked />
+                  Show Frequencies
+                </label>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'about':
+        return (
+          <div className="tab-content">
+            <h2>About SynthMob</h2>
+            <p>A mobile-optimized synthesizer built with Tauri and React.</p>
+            
+            <div className="about-section">
+              <h3>Features</h3>
+              <ul>
+                <li>Real-time audio synthesis using FunDSP</li>
+                <li>Low-latency touch response</li>
+                <li>Cross-platform (Desktop & Android)</li>
+                <li>ADSR envelope with delay effects</li>
+                <li>Optimized for mobile performance</li>
+              </ul>
+            </div>
+
+            <div className="about-section">
+              <h3>Technical Details</h3>
+              <ul>
+                <li>Frontend: React + TypeScript</li>
+                <li>Backend: Rust + Tauri</li>
+                <li>Audio Engine: FunDSP + Oboe (Android)</li>
+                <li>Platform: {isAndroid ? 'Android' : 'Desktop'}</li>
+              </ul>
+            </div>
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="app-container">
-      <div className="main-content">
-        <div className="info-panel">
-          <h1>SynthMob</h1>
-          <p className="subtitle">Mobile Synthesizer</p>
-
-          <div className="status">
-            <p>{synthState}</p>
-            <small>
-              {isAndroid
-                ? '⚡ Callback mode audio engine'
-                : '🔄 Desktop callback mode'}
-            </small>
-          </div>
-
-          <div className="instructions">
-            <h3>How to Play</h3>
-            <ul>
-              <li>Touch and hold keys to play notes</li>
-              <li>Release to stop the sound</li>
-              <li>Scroll the keyboard for more octaves</li>
-              <li>Each key shows note name and frequency</li>
-            </ul>
-          </div>
+      <div className="left-pane">
+        <div className="tab-bar">
+          <button
+            className={`tab ${activeTab === 'info' ? 'active' : ''}`}
+            onClick={() => setActiveTab('info')}
+          >
+            Info
+          </button>
+          <button
+            className={`tab ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            Settings
+          </button>
+          <button
+            className={`tab ${activeTab === 'about' ? 'active' : ''}`}
+            onClick={() => setActiveTab('about')}
+          >
+            About
+          </button>
+        </div>
+        <div className="tab-content-container">
+          {renderTabContent()}
         </div>
       </div>
 
-      <div className="keyboard-panel">
+      <div className="right-pane">
         <Keyboard onNoteStart={playNote} onNoteStop={stopNote} />
       </div>
     </div>
