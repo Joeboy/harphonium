@@ -123,7 +123,7 @@ case "$1" in
         # Record build start time
         BUILD_START=$(date +%s)
         
-        npm run tauri android build -- --target "$TARGET" --debug
+        cargo tauri android build --target "$TARGET" --debug
         
         if [ $? -eq 0 ]; then
             # Check multiple possible APK locations
@@ -368,8 +368,8 @@ case "$1" in
             echo "CARGO_TARGET_DIR now set to: $CARGO_TARGET_DIR"
         fi
         
-        npm run tauri android build -- --target aarch64 --debug
-        # cargo tauri android build --target aarch64 --debug
+        # npm run tauri android build -- --target aarch64 --debug
+        cargo tauri android build --target aarch64 --debug
         
         if [ $? -eq 0 ]; then
             echo "✅ Build successful!"
