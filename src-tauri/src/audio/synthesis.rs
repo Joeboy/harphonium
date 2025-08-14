@@ -34,7 +34,7 @@ impl FunDSPSynth {
         // 1. Generate sine wave
         // 2. Apply ADSR envelope (controlled by playing_var as gate)
         // 3. Add delay effect
-        let synth = Box::new(
+        let mut synth = Box::new(
             var(&frequency_var)
                 >> sine()
                 >> (pass() * (var(&playing_var) >> adsr_envelope))
@@ -42,6 +42,12 @@ impl FunDSPSynth {
                 >> (pass() + delay(0.5) * 0.3)
                 >> join(),
         );
+
+        // Set the correct sample rate for the synthesizer
+        synth.set_sample_rate(sample_rate as f64);
+        synth.reset();
+
+        println!("🎵 FunDSP initialized at {} Hz sample rate", sample_rate);
 
         Ok(FunDSPSynth {
             synth,
