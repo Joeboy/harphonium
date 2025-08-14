@@ -7,11 +7,11 @@ use std::sync::Arc;
 
 /// FunDSP-based synthesizer that can be shared across platforms
 pub struct FunDSPSynth {
-    /// FunDSP synthesis chain with delay effect
+    /// FunDSP synthesis chain with delay effect and ADSR envelope
     synth: Box<dyn AudioUnit + Send>,
     /// Frequency control for the oscillator
     frequency_var: shared::Shared,
-    /// Playing state control (0.0 = silent, 1.0 = playing)
+    /// Playing state control (0.0 = silent, 1.0 = playing) - also used as ADSR gate
     playing_var: shared::Shared,
     /// Current frequency for frequency change detection
     current_frequency: f64,
@@ -23,18 +23,23 @@ pub struct FunDSPSynth {
 
 impl FunDSPSynth {
     pub fn new(sample_rate: f32) -> Result<Self, Box<dyn std::error::Error>> {
-        // Create shared variables for frequency and playing state control
+        // Create shared variables for frequency and playing state
         let frequency_var = shared(440.0);
-        let playing_var = shared(1.0); // 1.0 = playing, 0.0 = silent
+        let playing_var = shared(1.0); // 1.0 = playing, 0.0 = silent (also used as ADSR gate)
 
-        // Use the `split` operator to create two outputs, then sum them
-        // Apply playing_var BEFORE the delay so it gates the input to the delay buffer
+        // ADSR parameters: Attack=0.1s, Decay=0.2s, Sustain=0.6, Release=0.3s
+        let adsr_envelope = adsr_live(0.02, 0.2, 0.6, 0.3);
+
+        // Synthesis pipeline with ADSR envelope:
+        // 1. Generate sine wave
+        // 2. Apply ADSR envelope (controlled by playing_var as gate)
+        // 3. Add delay effect
         let synth = Box::new(
             var(&frequency_var)
                 >> sine()
-                >> var(&playing_var) * pass()
+                >> (pass() * (var(&playing_var) >> adsr_envelope))
                 >> split()
-                >> (pass() + delay(0.25) * 0.3)
+                >> (pass() + delay(0.5) * 0.3)
                 >> join(),
         );
 
@@ -91,12 +96,10 @@ impl FunDSPSynth {
         is_playing: Arc<AtomicBool>,
         frequency_bits: Arc<AtomicU32>,
     ) -> f32 {
-        // Update playing state in the synthesis pipeline
-        let playing = if is_playing.load(Ordering::Relaxed) {
-            1.0
-        } else {
-            0.0
-        };
+        let currently_playing = is_playing.load(Ordering::Relaxed);
+
+        // Update playing state - this now directly controls both audio gating and ADSR envelope
+        let playing = if currently_playing { 1.0 } else { 0.0 };
         self.playing_var.set_value(playing);
 
         let frequency_bits_val = frequency_bits.load(Ordering::Relaxed);
