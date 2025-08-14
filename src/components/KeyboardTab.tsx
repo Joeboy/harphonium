@@ -8,6 +8,7 @@ interface KeyboardTabProps {
     selectedKey: string;
     selectedScale: string;
     showNoteNames: boolean;
+    transpose: number;
   }) => void;
 }
 
@@ -19,6 +20,7 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
   const [selectedKey, setSelectedKey] = useState<string>('C');
   const [selectedScale, setSelectedScale] = useState<string>('chromatic');
   const [showNoteNames, setShowNoteNames] = useState<boolean>(true);
+  const [transpose, setTranspose] = useState<number>(0);
 
   const handleOctavesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onOctavesChange(parseFloat(e.target.value));
@@ -31,6 +33,7 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
       selectedKey: newKey,
       selectedScale,
       showNoteNames,
+      transpose,
     });
   };
 
@@ -41,6 +44,7 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
       selectedKey,
       selectedScale: newScale,
       showNoteNames,
+      transpose,
     });
   };
 
@@ -51,6 +55,53 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
       selectedKey,
       selectedScale,
       showNoteNames: newShowNoteNames,
+      transpose,
+    });
+  };
+
+  const handleTransposeUp = () => {
+    const newTranspose = transpose === 24 ? -24 : transpose + 1;
+    setTranspose(newTranspose);
+    onScaleSettingsChange({
+      selectedKey,
+      selectedScale,
+      showNoteNames,
+      transpose: newTranspose
+    });
+  };
+
+  const handleTransposeDown = () => {
+    const newTranspose = transpose === -24 ? 24 : transpose - 1;
+    setTranspose(newTranspose);
+    onScaleSettingsChange({
+      selectedKey,
+      selectedScale,
+      showNoteNames,
+      transpose: newTranspose
+    });
+  };
+
+  const handleOctaveUp = () => {
+    // Add 12 semitones (1 octave) - max +24
+    const newTranspose = Math.min(transpose + 12, 24);
+    setTranspose(newTranspose);
+    onScaleSettingsChange({
+      selectedKey,
+      selectedScale,
+      showNoteNames,
+      transpose: newTranspose
+    });
+  };
+
+  const handleOctaveDown = () => {
+    // Subtract 12 semitones (1 octave) - min -24
+    const newTranspose = Math.max(transpose - 12, -24);
+    setTranspose(newTranspose);
+    onScaleSettingsChange({
+      selectedKey,
+      selectedScale,
+      showNoteNames,
+      transpose: newTranspose
     });
   };
 
@@ -103,6 +154,41 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
             />
             Show Note Names
           </label>
+        </div>
+        <div className="setting-item">
+          <label>Transpose: {transpose > 0 ? `+${transpose}` : transpose} semitones</label>
+          <div className="transpose-controls">
+            <button 
+              type="button"
+              className="transpose-button"
+              onClick={handleTransposeDown}
+            >
+              ▼ Down
+            </button>
+            <button 
+              type="button"
+              className="transpose-button"
+              onClick={handleTransposeUp}
+            >
+              ▲ Up
+            </button>
+          </div>
+          <div className="transpose-controls" style={{ marginTop: '8px' }}>
+            <button 
+              type="button"
+              className="transpose-button"
+              onClick={handleOctaveDown}
+            >
+              ▼▼ Octave Down
+            </button>
+            <button 
+              type="button"
+              className="transpose-button"
+              onClick={handleOctaveUp}
+            >
+              ▲▲ Octave Up
+            </button>
+          </div>
         </div>
       </div>
     </div>

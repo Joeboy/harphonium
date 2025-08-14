@@ -77,9 +77,36 @@
 }
 
 .setting-item input[type="checkbox"] {
-  margin-right: 0.5rem;
+  margin-right: 10px;
   transform: scale(1.2);
-  accent-color: #007acc;
+}
+
+.transpose-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.transpose-button {
+  flex: 1;
+  padding: 8px 12px;
+  background: #646cff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.transpose-button:hover {
+  background: #5a5fcf;
+  transform: translateY(-1px);
+}
+
+.transpose-button:active {
+  transform: translateY(0);
 }
 
 .setting-item label:has(input[type="checkbox"]) {

@@ -17,6 +17,7 @@ function App() {
     selectedKey: 'C',
     selectedScale: 'chromatic',
     showNoteNames: true,
+    transpose: 0,
   });
 
   useEffect(() => {
@@ -180,6 +181,7 @@ function App() {
           selectedKey={scaleSettings.selectedKey}
           selectedScale={scaleSettings.selectedScale}
           showNoteNames={scaleSettings.showNoteNames}
+          transpose={scaleSettings.transpose}
         />
       </div>
     </div>

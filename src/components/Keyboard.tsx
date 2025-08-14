@@ -8,6 +8,7 @@ interface KeyboardProps {
   selectedKey: string;
   selectedScale: string;
   showNoteNames: boolean;
+  transpose: number;
 }
 
 interface KeyData {
@@ -16,7 +17,7 @@ interface KeyData {
   isBlack?: boolean;
 }
 
-const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale, showNoteNames }) => {
+const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale, showNoteNames, transpose }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Check if a note is in the selected scale
@@ -90,8 +91,9 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
       const currentOctave = startOctave + octaveOffset;
       
       const baseNote = baseOctave[noteIndex];
-      // Calculate frequency using the octave multiplier (each octave doubles the frequency)
-      const frequency = baseNote.frequency * Math.pow(2, octaveOffset);
+      // Calculate frequency using the octave multiplier and transpose offset
+      // Each octave doubles the frequency, and each semitone is 2^(1/12) ratio
+      const frequency = baseNote.frequency * Math.pow(2, octaveOffset + transpose / 12);
       
       keys.push({
         frequency: frequency,
