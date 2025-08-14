@@ -21,16 +21,27 @@ pub fn start_audio_stream(
     );
     println!("🚀 Desktop audio using FunDSP synthesis (no fallback)");
 
+    // Align backend sample rate to device
+    if let Ok(mut s) = synth.lock() {
+        s.set_sample_rate(sample_rate);
+    }
+
     let stream = device.build_output_stream(
         &config,
         move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-            // Fill buffer with FunDSP samples
-            if let Ok(mut synth_guard) = synth.lock() {
-                for frame in data.chunks_mut(config.channels as usize) {
-                    let sample = synth_guard.get_sample();
-                    for channel_sample in frame.iter_mut() {
-                        *channel_sample = sample;
+            // Fill buffer with FunDSP samples, but never block RT thread
+            match synth.try_lock() {
+                Ok(mut synth_guard) => {
+                    for frame in data.chunks_mut(config.channels as usize) {
+                        let sample = synth_guard.get_sample();
+                        for channel_sample in frame.iter_mut() {
+                            *channel_sample = sample;
+                        }
                     }
+                }
+                Err(_) => {
+                    // On contention, output silence this cycle
+                    for s in data.iter_mut() { *s = 0.0; }
                 }
             }
         },

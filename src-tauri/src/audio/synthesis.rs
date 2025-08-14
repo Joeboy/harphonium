@@ -66,30 +66,40 @@ impl FunDSPSynth {
         })
     }
 
+    // Lock-free control handles (cheap clones)
+    pub fn frequency_handle(&self) -> shared::Shared {
+        self.frequency_var.clone()
+    }
+
+    pub fn gate_handle(&self) -> shared::Shared {
+        self.key_down_var.clone()
+    }
+
+    pub fn volume_handle(&self) -> shared::Shared {
+        self.master_volume_var.clone()
+    }
+
+    /// Update the backend sample rate and reset safely.
+    pub fn set_sample_rate(&mut self, sample_rate: f32) {
+        if sample_rate > 0.0 {
+            self.sample_rate = sample_rate;
+            self.synth.set_sample_rate(sample_rate as f64);
+            self.synth.reset();
+        }
+    }
+
     /// Generate a single mono sample
     pub fn get_sample(&mut self) -> f32 {
         if !self.enabled {
             return 0.0;
         }
 
-        // Try to get a sample from the synthesizer
-        let result =
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.synth.get_mono()));
-
-        match result {
-            Ok(output) => {
-                // Safety: ensure output is finite and in valid range
-                if output.is_finite() && output.abs() <= 1.0 {
-                    output
-                } else {
-                    0.0 // Safety fallback
-                }
-            }
-            Err(_) => {
-                // If FunDSP panics, disable it for this instance
-                self.enabled = false;
-                0.0
-            }
+        // Fast path: direct sample fetch and clamp
+        let output = self.synth.get_mono();
+        if output.is_finite() {
+            output.clamp(-1.0, 1.0)
+        } else {
+            0.0
         }
     }
 

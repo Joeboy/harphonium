@@ -12,7 +12,7 @@ pub fn start_audio_stream(
 
     println!("Initializing Android audio engine with Oboe - CALLBACK MODE");
 
-    // Create callback handler with ultra-low latency processing using FunDSP
+    // Create callback handler; never block in RT thread
     struct AudioCallback {
         synth: Arc<Mutex<FunDSPSynth>>,
     }
@@ -25,10 +25,16 @@ pub fn start_audio_stream(
             _stream: &mut dyn AudioOutputStreamSafe,
             frames: &mut [f32],
         ) -> DataCallbackResult {
-            // Generate audio using FunDSP synthesis
-            if let Ok(mut synth_guard) = self.synth.lock() {
-                for sample in frames.iter_mut() {
-                    *sample = synth_guard.get_sample();
+            // Generate audio using FunDSP synthesis without locking if unavailable
+            match self.synth.try_lock() {
+                Ok(mut synth_guard) => {
+                    for sample in frames.iter_mut() {
+                        *sample = synth_guard.get_sample();
+                    }
+                }
+                Err(_) => {
+                    // Fill with silence on contention to avoid glitches / priority inversion
+                    frames.fill(0.0);
                 }
             }
             DataCallbackResult::Continue
@@ -39,84 +45,26 @@ pub fn start_audio_stream(
         synth: synth.clone(),
     };
 
-    // Try different configurations for the best latency
-    let buffer_sizes = [16, 24, 32, 48, 64];
-    let sample_rates = [48000, 44100];
-    let mut stream = None;
-    let mut best_latency = f32::MAX;
-
-    println!("🚀 Android audio using FunDSP synthesis (no fallback)");
-
-    // Strategy 1: CALLBACK + LowLatency + Exclusive - most aggressive
-    for &sr in &sample_rates {
-        for &buffer_size in &buffer_sizes {
-            match AudioStreamBuilder::default()
-                .set_format::<f32>()
-                .set_channel_count::<oboe::Mono>()
-                .set_sample_rate(sr)
-                .set_frames_per_callback(buffer_size)
-                .set_performance_mode(PerformanceMode::LowLatency)
-                .set_sharing_mode(SharingMode::Exclusive)
-                .set_callback(AudioCallback {
-                    synth: synth.clone(),
-                })
-                .open_stream()
-            {
-                Ok(s) => {
-                    let actual_frames = s.get_frames_per_callback();
-                    let latency_ms = (actual_frames as f32 / sr as f32) * 1000.0;
-
-                    if latency_ms < best_latency {
-                        best_latency = latency_ms;
-                        stream = Some(s);
-                    }
-                    println!(
-                        "🔥 CALLBACK+LowLatency+Exclusive {}Hz {}→{} frames ({:.2}ms)",
-                        sr, buffer_size, actual_frames, latency_ms
-                    );
-                }
-                Err(_) => {
-                    // Try next configuration
-                }
-            }
-        }
-    }
-
-    // Strategy 2: Fallback to shared mode if exclusive failed
-    if stream.is_none() {
-        println!("Exclusive mode failed, trying shared mode...");
-        for &sr in &sample_rates {
-            match AudioStreamBuilder::default()
-                .set_format::<f32>()
-                .set_channel_count::<oboe::Mono>()
-                .set_sample_rate(sr)
-                .set_frames_per_callback(64)
-                .set_performance_mode(PerformanceMode::LowLatency)
-                .set_sharing_mode(SharingMode::Shared)
-                .set_callback(AudioCallback {
-                    synth: synth.clone(),
-                })
-                .open_stream()
-            {
-                Ok(s) => {
-                    stream = Some(s);
-                    break;
-                }
-                Err(_) => continue,
-            }
-        }
-    }
-
-    // Get the final stream
-    let mut stream = match stream {
-        Some(s) => s,
-        None => {
-            return Err("Failed to initialize callback audio stream".into());
-        }
-    };
+    println!("🚀 Android audio using FunDSP synthesis (Shared mode)");
+    let mut stream = AudioStreamBuilder::default()
+        .set_format::<f32>()
+        .set_channel_count::<oboe::Mono>()
+        .set_sample_rate(24000)
+        .set_frames_per_callback(64)
+        .set_performance_mode(PerformanceMode::LowLatency)
+        .set_sharing_mode(SharingMode::Shared)
+        .set_callback(AudioCallback {
+            synth: synth.clone(),
+        })
+        .open_stream()?;
 
     let actual_sample_rate = stream.get_sample_rate() as f32;
     let actual_callback_size = stream.get_frames_per_callback();
+
+    // Align backend sample rate to device stream
+    if let Ok(mut s) = synth.lock() {
+        s.set_sample_rate(actual_sample_rate);
+    }
 
     println!(
         "🎯 Oboe CALLBACK stream: {} Hz, {} frames per callback",
@@ -154,12 +102,3 @@ pub fn start_audio_stream(
 
     Ok(())
 }
-
-// // Legacy function for backwards compatibility
-// pub fn initialize_audio_engine(
-//     _is_playing: std::sync::Arc<std::sync::atomic::AtomicBool>,
-//     _frequency_bits: std::sync::Arc<std::sync::atomic::AtomicU32>,
-// ) -> Result<(), Box<dyn std::error::Error>> {
-//     eprintln!("Warning: initialize_audio_engine is deprecated. Use start_audio_stream instead.");
-//     Ok(())
-// }

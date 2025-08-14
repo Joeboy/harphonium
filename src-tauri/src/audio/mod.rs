@@ -21,7 +21,8 @@ pub struct AudioEngine {
 
 impl AudioEngine {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let sample_rate = 48000.0f32; // Default sample rate
+    // Tentative sample rate; platform backends will align it to the device after opening streams
+    let sample_rate = 48000.0f32;
         let synth = Arc::new(Mutex::new(FunDSPSynth::new(sample_rate)?));
         
         let engine = AudioEngine {
