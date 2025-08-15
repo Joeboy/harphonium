@@ -2,91 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod audio;
-
-// Commands for both mobile and desktop
-#[tauri::command]
-async fn play_note(frequency: f32) {
-    if let Err(e) = audio::play_frequency(frequency) {
-        eprintln!("Error playing note: {}", e);
-    }
-}
-
-#[tauri::command]
-async fn stop_note() {
-    if let Err(e) = audio::stop_audio() {
-        eprintln!("Error stopping note: {}", e);
-    }
-}
-
-#[tauri::command]
-async fn set_master_volume(volume: f32) {
-    if let Err(e) = audio::set_master_volume(volume) {
-        eprintln!("Error setting master volume: {}", e);
-    }
-}
-
-#[tauri::command]
-async fn get_master_volume() -> f32 {
-    audio::get_master_volume()
-}
-
-#[tauri::command]
-async fn set_waveform(waveform: String) -> Result<(), String> {
-    audio::set_waveform(&waveform)
-}
-
-#[tauri::command]
-async fn get_waveform() -> String {
-    audio::get_waveform()
-}
-
-#[tauri::command]
-async fn set_attack(attack: f32) {
-    if let Err(e) = audio::set_attack(attack) {
-        eprintln!("Error setting attack: {}", e);
-    }
-}
-
-#[tauri::command]
-async fn get_attack() -> f32 {
-    audio::get_attack()
-}
-
-#[tauri::command]
-async fn set_decay(decay: f32) {
-    if let Err(e) = audio::set_decay(decay) {
-        eprintln!("Error setting decay: {}", e);
-    }
-}
-
-#[tauri::command]
-async fn get_decay() -> f32 {
-    audio::get_decay()
-}
-
-#[tauri::command]
-async fn set_sustain(sustain: f32) {
-    if let Err(e) = audio::set_sustain(sustain) {
-        eprintln!("Error setting sustain: {}", e);
-    }
-}
-
-#[tauri::command]
-async fn get_sustain() -> f32 {
-    audio::get_sustain()
-}
-
-#[tauri::command]
-async fn set_release(release: f32) {
-    if let Err(e) = audio::set_release(release) {
-        eprintln!("Error setting release: {}", e);
-    }
-}
-
-#[tauri::command]
-async fn get_release() -> f32 {
-    audio::get_release()
-}
+pub mod commands;
 
 // Mobile library entry point
 #[cfg(mobile)]
@@ -102,20 +18,20 @@ pub fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            play_note,
-            stop_note,
-            set_master_volume,
-            get_master_volume,
-            set_waveform,
-            get_waveform,
-            set_attack,
-            get_attack,
-            set_decay,
-            get_decay,
-            set_sustain,
-            get_sustain,
-            set_release,
-            get_release
+            commands::play_note,
+            commands::stop_note,
+            commands::set_master_volume,
+            commands::get_master_volume,
+            commands::set_waveform,
+            commands::get_waveform,
+            commands::set_attack,
+            commands::get_attack,
+            commands::set_decay,
+            commands::get_decay,
+            commands::set_sustain,
+            commands::get_sustain,
+            commands::set_release,
+            commands::get_release
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
