@@ -15,15 +15,15 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
   const [reverbWetLevel, setReverbWetLevel] = useState(0.3);
   const [reverbDryLevel, setReverbDryLevel] = useState(0.7);
 
-  // Delay controls
-  // ...existing code...
-  const [delayTime, setDelayTime] = useState(0.25);
 
-  // ...existing code...
+  // Delay controls
+  const [delayTime, setDelayTime] = useState(0.25);
   const [delayWetLevel, setDelayWetLevel] = useState(0.3);
+  const [delayFeedback, setDelayFeedback] = useState(0.4);
 
   // Throttled delay time and mix handlers (20Hz)
   const SLIDER_THROTTLE_MS = 100;
+
   const throttledSetDelayTime = useMemo(
     () =>
       throttle(async (value: number) => {
@@ -46,6 +46,18 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
       }, SLIDER_THROTTLE_MS),
     []
   );
+  const throttledSetDelayFeedback = useMemo(
+    () =>
+      throttle(async (value: number) => {
+        try {
+          await invoke('set_delay_feedback', { delayFeedback: value });
+        } catch (error) {
+          console.error('Failed to set delay feedback:', error);
+        }
+      }, SLIDER_THROTTLE_MS),
+    []
+  );
+
 
   const handleDelayTimeChange = (value: number) => {
     setDelayTime(value);
@@ -55,6 +67,11 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
   const handleDelayMixChange = (value: number) => {
     setDelayWetLevel(value);
     throttledSetDelayMix(value);
+  };
+
+  const handleDelayFeedbackChange = (value: number) => {
+    setDelayFeedback(value);
+    throttledSetDelayFeedback(value);
   };
 
   // Chorus controls
@@ -173,6 +190,20 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               onChange={(e) =>
                 handleDelayTimeChange(parseFloat(e.target.value))
               }
+            />
+          </div>
+          <div className="control-group">
+            <label htmlFor="delay-feedback">
+              Feedback: {(delayFeedback * 100).toFixed(0)}%
+            </label>
+            <input
+              type="range"
+              id="delay-feedback"
+              min="0"
+              max="0.95"
+              step="0.01"
+              value={delayFeedback}
+              onChange={(e) => handleDelayFeedbackChange(parseFloat(e.target.value))}
             />
           </div>
           <div className="control-group">
