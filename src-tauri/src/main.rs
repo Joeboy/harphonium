@@ -1,7 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-
 mod audio;
 mod commands;
 
@@ -29,7 +28,11 @@ fn main() {
             commands::set_sustain,
             commands::get_sustain,
             commands::set_release,
-            commands::get_release
+            commands::get_release,
+            commands::set_delay_time,
+            commands::get_delay_time,
+            commands::set_delay_mix,
+            commands::get_delay_mix
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

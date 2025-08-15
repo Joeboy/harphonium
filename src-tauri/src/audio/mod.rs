@@ -21,21 +21,24 @@ pub struct AudioEngine {
 
 impl AudioEngine {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-    // Tentative sample rate; platform backends will align it to the device after opening streams
-    let sample_rate = 48000.0f32;
+        // Tentative sample rate; platform backends will align it to the device after opening streams
+        let sample_rate = 48000.0f32;
         let synth = Arc::new(Mutex::new(FunDSPSynth::new(sample_rate)?));
-        
+
         let engine = AudioEngine {
             synth: synth.clone(),
         };
-        
+
         // Initialize the platform-specific audio streaming
         engine.init_platform_audio(synth)?;
-        
+
         Ok(engine)
     }
 
-    fn init_platform_audio(&self, synth: Arc<Mutex<FunDSPSynth>>) -> Result<(), Box<dyn std::error::Error>> {
+    fn init_platform_audio(
+        &self,
+        synth: Arc<Mutex<FunDSPSynth>>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Platform-specific initialization that connects to our synth
         #[cfg(not(target_os = "android"))]
         {
@@ -179,6 +182,40 @@ impl AudioEngine {
             synth.get_release()
         } else {
             0.3 // Default release
+        }
+    }
+
+    pub fn set_delay_time(&self, delay_time: f32) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.set_delay_time(delay_time);
+            Ok(())
+        } else {
+            Err("Failed to acquire synth lock".to_string())
+        }
+    }
+
+    pub fn get_delay_time(&self) -> f32 {
+        if let Ok(synth) = self.synth.lock() {
+            synth.get_delay_time()
+        } else {
+            0.5
+        }
+    }
+
+    pub fn set_delay_mix(&self, delay_mix: f32) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.set_delay_mix(delay_mix);
+            Ok(())
+        } else {
+            Err("Failed to acquire synth lock".to_string())
+        }
+    }
+
+    pub fn get_delay_mix(&self) -> f32 {
+        if let Ok(synth) = self.synth.lock() {
+            synth.get_delay_mix()
+        } else {
+            0.8 // Default delay mix
         }
     }
 }
@@ -360,5 +397,50 @@ pub fn get_release() -> f32 {
         engine.get_release()
     } else {
         0.3 // Default release
+    }
+}
+
+// Set delay time (in seconds or ms as appropriate for your synth)
+pub fn set_delay_time(_delay_time: f32) -> Result<(), String> {
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.set_delay_time(_delay_time)
+    } else {
+        Err("Audio engine not initialized".to_string())
+    }
+}
+
+pub fn get_delay_time() -> f32 {
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.get_delay_time()
+    } else {
+        0.5 // Default delay time
+    }
+}
+
+// Set delay mix (0.0 = dry, 1.0 = fully wet)
+pub fn set_delay_mix(_delay_mix: f32) -> Result<(), String> {
+    // TODO: Implement actual delay mix control in your synth
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.set_delay_mix(_delay_mix)
+    } else {
+        Err("Audio engine not initialized".to_string())
+    }
+}
+
+pub fn get_delay_mix() -> f32 {
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.get_delay_mix()
+    } else {
+        0.8 // Default delay mix
     }
 }

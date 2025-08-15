@@ -31,7 +31,11 @@ pub fn main() {
             commands::set_sustain,
             commands::get_sustain,
             commands::set_release,
-            commands::get_release
+            commands::get_release,
+            commands::set_delay_time,
+            commands::get_delay_time,
+            commands::set_delay_mix,
+            commands::get_delay_mix
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

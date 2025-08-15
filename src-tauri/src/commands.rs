@@ -86,3 +86,27 @@ pub async fn set_release(release: f32) {
 pub async fn get_release() -> f32 {
     audio::get_release()
 }
+
+#[tauri::command]
+pub async fn set_delay_time(delay_time: f32) {
+    if let Err(e) = audio::set_delay_time(delay_time) {
+        eprintln!("Error setting delay time: {}", e);
+    }
+}
+
+#[tauri::command]
+pub async fn get_delay_time() -> f32 {
+    audio::get_delay_time()
+}
+
+#[tauri::command]
+pub async fn set_delay_mix(delay_mix: f32) {
+    if let Err(e) = audio::set_delay_mix(delay_mix) {
+        eprintln!("Error setting delay mix: {}", e);
+    }
+}
+
+#[tauri::command]
+pub async fn get_delay_mix() -> f32 {
+    audio::get_delay_mix()
+}

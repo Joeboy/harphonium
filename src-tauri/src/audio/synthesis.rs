@@ -317,4 +317,25 @@ impl FunDSPSynth {
     pub fn get_release(&self) -> f32 {
         self.release_var.value()
     }
+
+    /// Set delay time (in seconds)
+    pub fn set_delay_time(&mut self, delay_time: f32) {
+        let clamped_delay_time = delay_time.clamp(0.0, 1.0); // 0ms to 1s
+        self.delay_time_var.set_value(clamped_delay_time);
+    }
+
+    /// Get delay time (in seconds)
+    pub fn get_delay_time(&self) -> f32 {
+        self.delay_time_var.value()
+    }
+
+    pub fn set_delay_mix(&mut self, delay_mix: f32) {
+        let clamped_delay_mix = delay_mix.clamp(0.0, 1.0); // 0% to 100%
+        self.delay_mix_var.set_value(clamped_delay_mix);
+    }
+
+    /// Get delay mix (0.0 to 1.0)
+    pub fn get_delay_mix(&self) -> f32 {
+        self.delay_mix_var.value()
+    }
 }
