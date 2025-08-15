@@ -61,11 +61,11 @@ html, body {
   min-width: 0; /* Allow shrinking */
 }
 
-/* Right pane - keyboard - always fixed 150px width */
+/* Right pane - keyboard - always fixed 120px width */
 .right-pane {
-  width: 150px;
-  min-width: 150px;
-  max-width: 150px;
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
   height: 100vh; /* Ensure full viewport height */
   display: flex;
   background: #2a2a2a;
