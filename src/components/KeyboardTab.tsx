@@ -23,6 +23,10 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
   const [showNoteNames, setShowNoteNames] = useState(true);
   const [transpose, setTranspose] = useState(0);
   const [displayDisabledNotes, setDisplayDisabledNotes] = useState(true);
+  const [keyboardType, setKeyboardType] = useState<'keys' | 'slide' | 'fretless'>('keys');
+  const handleKeyboardTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setKeyboardType(e.target.value as 'keys' | 'slide' | 'fretless');
+  };
 
   const handleOctavesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onOctavesChange(parseFloat(e.target.value));
@@ -129,6 +133,41 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
   return (
     <div className="tab-content">
       <div className="settings-section">
+        <div className="setting-item">
+          <label>Keyboard type</label>
+          <div>
+            <label style={{ marginRight: '1em' }}>
+              <input
+                type="radio"
+                name="keyboard-type"
+                value="keys"
+                checked={keyboardType === 'keys'}
+                onChange={handleKeyboardTypeChange}
+              />
+              Keys
+            </label>
+            <label style={{ marginRight: '1em' }}>
+              <input
+                type="radio"
+                name="keyboard-type"
+                value="slide"
+                checked={keyboardType === 'slide'}
+                onChange={handleKeyboardTypeChange}
+              />
+              Slide
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="keyboard-type"
+                value="fretless"
+                checked={keyboardType === 'fretless'}
+                onChange={handleKeyboardTypeChange}
+              />
+              Fretless
+            </label>
+          </div>
+        </div>
         <div className="setting-item">
           <label>Octaves</label>
           <select value={octaves} onChange={handleOctavesChange}>
