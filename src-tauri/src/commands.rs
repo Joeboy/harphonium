@@ -100,6 +100,18 @@ pub async fn get_delay_time() -> f32 {
 }
 
 #[tauri::command]
+pub async fn set_delay_feedback(delay_feedback: f32) {
+    if let Err(e) = audio::set_delay_feedback(delay_feedback) {
+        eprintln!("Error setting delay feedback: {}", e);
+    }
+}
+
+#[tauri::command]
+pub async fn get_delay_feedback() -> f32 {
+    audio::get_delay_feedback()
+}
+
+#[tauri::command]
 pub async fn set_delay_mix(delay_mix: f32) {
     if let Err(e) = audio::set_delay_mix(delay_mix) {
         eprintln!("Error setting delay mix: {}", e);

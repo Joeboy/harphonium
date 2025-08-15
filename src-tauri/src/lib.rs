@@ -34,6 +34,8 @@ pub fn main() {
             commands::get_release,
             commands::set_delay_time,
             commands::get_delay_time,
+            commands::set_delay_feedback,
+            commands::get_delay_feedback,
             commands::set_delay_mix,
             commands::get_delay_mix
         ])

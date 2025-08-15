@@ -202,6 +202,23 @@ impl AudioEngine {
         }
     }
 
+    pub fn set_delay_feedback(&self, delay_feedback: f32) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.set_delay_feedback(delay_feedback);
+            Ok(())
+        } else {
+            Err("Failed to acquire synth lock".to_string())
+        }
+    }
+
+    pub fn get_delay_feedback(&self) -> f32 {
+        if let Ok(synth) = self.synth.lock() {
+            synth.get_delay_feedback()
+        } else {
+            0.4 // Default delay feedback
+        }
+    }
+
     pub fn set_delay_mix(&self, delay_mix: f32) -> Result<(), String> {
         if let Ok(mut synth) = self.synth.lock() {
             synth.set_delay_mix(delay_mix);
@@ -422,6 +439,26 @@ pub fn get_delay_time() -> f32 {
     }
 }
 
+pub fn set_delay_feedback(_delay_feedback: f32) -> Result<(), String> {
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.set_delay_feedback(_delay_feedback)
+    } else {
+        Err("Audio engine not initialized".to_string())
+    }
+}
+
+pub fn get_delay_feedback() -> f32 {
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.get_delay_feedback()
+    } else {
+        0.4 // Default delay feedback
+    }
+}
 // Set delay mix (0.0 = dry, 1.0 = fully wet)
 pub fn set_delay_mix(_delay_mix: f32) -> Result<(), String> {
     // TODO: Implement actual delay mix control in your synth

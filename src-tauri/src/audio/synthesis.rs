@@ -131,7 +131,7 @@ impl FunDSPSynth {
 
         // Create mixer to feed delayed signal back to the delay node, mixed with the dry input signal
         let delay_feedback_gain_nodeid = net.push(Box::new(pass() * var(&delay_feedback_var)));
-        let delay_feedback_mixer_nodeid = net.push(Box::new((pass() + pass())));
+        let delay_feedback_mixer_nodeid = net.push(Box::new(pass() + pass()));
         net.connect(
             delay_feedback_gain_nodeid,
             0,
@@ -380,6 +380,19 @@ impl FunDSPSynth {
     /// Get delay time (in seconds)
     pub fn get_delay_time(&self) -> f32 {
         self.delay_time_var.value()
+    }
+
+    /// Set delay feedback (0.0 to 1.0)
+    pub fn set_delay_feedback(&mut self, feedback: f32) {
+        if !self.enabled {
+            return; // No change needed
+        }
+        self.delay_feedback_var.set_value(feedback.clamp(0.0, 1.0));
+    }
+
+    /// Get delay feedback
+    pub fn get_delay_feedback(&self) -> f32 {
+        self.delay_feedback_var.value()
     }
 
     pub fn set_delay_mix(&mut self, delay_mix: f32) {
