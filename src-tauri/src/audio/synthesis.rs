@@ -72,6 +72,9 @@ pub struct FunDSPSynth {
     decay_var: shared::Shared,
     sustain_var: shared::Shared,
     release_var: shared::Shared,
+
+    delay_time_var: shared::Shared,
+    delay_mix_var: shared::Shared,
     /// Sample rate for proper delay calculation
     sample_rate: f32,
     /// Whether FunDSP is enabled (can be disabled if panics occur)
@@ -96,6 +99,10 @@ impl FunDSPSynth {
             sustain_var.value(),
             release_var.value(),
         );
+
+        let delay_time_var = shared(0.8);
+        let delay_mix_var = shared(0.3);
+
         let mut net = Net::new(0, 1);
 
         // Create the synthesis chain dynamically
@@ -113,16 +120,26 @@ impl FunDSPSynth {
         net.connect(oscillator_nodeid, 0, vca_nodeid, 0);
         net.connect(adsr_nodeid, 0, vca_nodeid, 1);
 
-        let tail = split()
-            >> (pass() + delay(0.3) * 0.3)
-            >> join()
-            >> mul(0.4)
-            >> (pass() * var(&master_volume_var));
+        // Delay stuff
+        // Create delay node
+        let delay_nodeid = net.push(Box::new(delay(delay_time_var.value())));
+        // Create delay gain node
+        let delay_gain_nodeid = net.push(Box::new(pass() * var(&delay_mix_var)));
+        // Create mixer node
+        let delay_mixer_nodeid = net.push(Box::new(pass() + pass()));
+        // Wire direct input into delay mixer node:
+        net.connect(vca_nodeid, 0, delay_mixer_nodeid, 0);
+        // Wire input into delay node
+        net.connect(vca_nodeid, 0, delay_nodeid, 0);
+        // Wire delay output into delay gain node
+        net.connect(delay_nodeid, 0, delay_gain_nodeid, 0);
+        // Wire delay output into delay mixer node
+        net.connect(delay_gain_nodeid, 0, delay_mixer_nodeid, 1);
 
-        let tail_nodeid = net.push(Box::new(tail));
-        net.pipe_all(vca_nodeid, tail_nodeid);
+        let master_vol_nodeid = net.push(Box::new(split() >> (pass() * var(&master_volume_var))));
+        net.pipe_all(delay_mixer_nodeid, master_vol_nodeid);
 
-        net.pipe_output(tail_nodeid);
+        net.pipe_output(master_vol_nodeid);
 
         let mut backend = net.backend();
         backend.set_sample_rate(sample_rate as f64);
@@ -143,10 +160,15 @@ impl FunDSPSynth {
             frequency_var,
             key_down_var,
             master_volume_var,
+
             attack_var,
             decay_var,
             sustain_var,
             release_var,
+
+            delay_time_var,
+            delay_mix_var,
+
             sample_rate,
             enabled: true,
         })
