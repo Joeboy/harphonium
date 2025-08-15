@@ -1,3 +1,5 @@
+This was LLM generated, maybe I'll read it for inspiration sometime.
+
 # SynthMob Roadmap
 
 This document outlines the development progress and future plans for the SynthMob cross-platform synthesizer app.
