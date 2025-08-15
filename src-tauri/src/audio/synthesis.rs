@@ -3,6 +3,9 @@
 
 use fundsp::hacker::*;
 
+use fundsp::buffer::{BufferArray, BufferRef};
+use fundsp::hacker::{MAX_BUFFER_SIZE, U1};
+
 /// Waveform types available in the synthesizer
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Waveform {
@@ -184,8 +187,27 @@ impl FunDSPSynth {
             output.fill(0.0);
             return;
         }
-        for sample in output.iter_mut() {
-            *sample = self.backend.get_mono().clamp(-1.0, 1.0);
+
+        let mut i = 0;
+        while i < output.len() {
+            // Work in chunks up to MAX_BUFFER_SIZE (usually 64 samples)
+            let n = std::cmp::min(output.len() - i, MAX_BUFFER_SIZE);
+            // Prepare an empty input buffer (no input channels)
+            let input = BufferRef::empty();
+
+            // Prepare an output buffer with 1 channel
+            let mut block = BufferArray::<U1>::new();
+
+            // Process a block of samples
+            self.backend.process(n, &input, &mut block.buffer_mut());
+
+            // Copy from the block into your output buffer, clamping each sample
+            let ch = block.buffer_ref().channel_f32(0);
+            for (dst, &src) in output[i..i + n].iter_mut().zip(&ch[..n]) {
+                *dst = src.clamp(-1.0, 1.0);
+            }
+
+            i += n;
         }
     }
 
