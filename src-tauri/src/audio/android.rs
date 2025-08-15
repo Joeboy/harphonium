@@ -39,10 +39,6 @@ pub fn start_audio_stream(
         }
     }
 
-    let callback = AudioCallback {
-        synth: synth.clone(),
-    };
-
     println!("🚀 Android audio using FunDSP synthesis (Shared mode)");
     let mut stream = AudioStreamBuilder::default()
         .set_format::<f32>()
