@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import './EffectsTab.css';
+import throttle from 'lodash.throttle';
 
 interface EffectsTabProps {
   // Add props for effects parameters as needed
@@ -16,8 +18,29 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
   // Delay controls
   const [delayEnabled, setDelayEnabled] = useState(false);
   const [delayTime, setDelayTime] = useState(0.25);
+
+  // Throttled handler to avoid spamming backend
   const [delayFeedback, setDelayFeedback] = useState(0.4);
   const [delayWetLevel, setDelayWetLevel] = useState(0.3);
+
+  // Throttled delay time handler (20Hz)
+  const SLIDER_THROTTLE_MS = 100;
+  const throttledSetDelayTime = useMemo(
+    () =>
+      throttle(async (value: number) => {
+        try {
+          await invoke('set_delay_time', { delayTime: value });
+        } catch (error) {
+          console.error('Failed to set delay time:', error);
+        }
+      }, SLIDER_THROTTLE_MS),
+    []
+  );
+
+  const handleDelayTimeChange = (value: number) => {
+    setDelayTime(value);
+    throttledSetDelayTime(value);
+  };
 
   // Chorus controls
   const [chorusEnabled, setChorusEnabled] = useState(false);
@@ -41,7 +64,7 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
   return (
     <div className="effects-tab">
       <h2>Audio Effects</h2>
-      
+
       {/* Reverb Section */}
       <div className="effect-section">
         <div className="effect-header">
@@ -58,7 +81,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
         {reverbEnabled && (
           <div className="effect-controls">
             <div className="control-group">
-              <label htmlFor="reverb-room-size">Room Size: {(reverbRoomSize * 100).toFixed(0)}%</label>
+              <label htmlFor="reverb-room-size">
+                Room Size: {(reverbRoomSize * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 id="reverb-room-size"
@@ -70,7 +95,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               />
             </div>
             <div className="control-group">
-              <label htmlFor="reverb-damping">Damping: {(reverbDamping * 100).toFixed(0)}%</label>
+              <label htmlFor="reverb-damping">
+                Damping: {(reverbDamping * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 id="reverb-damping"
@@ -82,7 +109,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               />
             </div>
             <div className="control-group">
-              <label htmlFor="reverb-wet">Wet: {(reverbWetLevel * 100).toFixed(0)}%</label>
+              <label htmlFor="reverb-wet">
+                Wet: {(reverbWetLevel * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 id="reverb-wet"
@@ -94,7 +123,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               />
             </div>
             <div className="control-group">
-              <label htmlFor="reverb-dry">Dry: {(reverbDryLevel * 100).toFixed(0)}%</label>
+              <label htmlFor="reverb-dry">
+                Dry: {(reverbDryLevel * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 id="reverb-dry"
@@ -125,7 +156,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
         {delayEnabled && (
           <div className="effect-controls">
             <div className="control-group">
-              <label htmlFor="delay-time">Time: {(delayTime * 1000).toFixed(0)}ms</label>
+              <label htmlFor="delay-time">
+                Time: {(delayTime * 1000).toFixed(0)}ms
+              </label>
               <input
                 type="range"
                 id="delay-time"
@@ -133,11 +166,15 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
                 max="2"
                 step="0.01"
                 value={delayTime}
-                onChange={(e) => setDelayTime(parseFloat(e.target.value))}
+                onChange={(e) =>
+                  handleDelayTimeChange(parseFloat(e.target.value))
+                }
               />
             </div>
             <div className="control-group">
-              <label htmlFor="delay-feedback">Feedback: {(delayFeedback * 100).toFixed(0)}%</label>
+              <label htmlFor="delay-feedback">
+                Feedback: {(delayFeedback * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 id="delay-feedback"
@@ -149,7 +186,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               />
             </div>
             <div className="control-group">
-              <label htmlFor="delay-wet">Mix: {(delayWetLevel * 100).toFixed(0)}%</label>
+              <label htmlFor="delay-wet">
+                Mix: {(delayWetLevel * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 id="delay-wet"
@@ -180,7 +219,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
         {chorusEnabled && (
           <div className="effect-controls">
             <div className="control-group">
-              <label htmlFor="chorus-rate">Rate: {chorusRate.toFixed(1)} Hz</label>
+              <label htmlFor="chorus-rate">
+                Rate: {chorusRate.toFixed(1)} Hz
+              </label>
               <input
                 type="range"
                 id="chorus-rate"
@@ -192,7 +233,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               />
             </div>
             <div className="control-group">
-              <label htmlFor="chorus-depth">Depth: {(chorusDepth * 100).toFixed(0)}%</label>
+              <label htmlFor="chorus-depth">
+                Depth: {(chorusDepth * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 id="chorus-depth"
@@ -204,7 +247,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               />
             </div>
             <div className="control-group">
-              <label htmlFor="chorus-mix">Mix: {(chorusMix * 100).toFixed(0)}%</label>
+              <label htmlFor="chorus-mix">
+                Mix: {(chorusMix * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 id="chorus-mix"
@@ -229,13 +274,17 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               checked={distortionEnabled}
               onChange={(e) => setDistortionEnabled(e.target.checked)}
             />
-            <span className="toggle-text">{distortionEnabled ? 'ON' : 'OFF'}</span>
+            <span className="toggle-text">
+              {distortionEnabled ? 'ON' : 'OFF'}
+            </span>
           </label>
         </div>
         {distortionEnabled && (
           <div className="effect-controls">
             <div className="control-group">
-              <label htmlFor="distortion-drive">Drive: {(distortionDrive * 100).toFixed(0)}%</label>
+              <label htmlFor="distortion-drive">
+                Drive: {(distortionDrive * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 id="distortion-drive"
@@ -247,7 +296,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               />
             </div>
             <div className="control-group">
-              <label htmlFor="distortion-tone">Tone: {(distortionTone * 100).toFixed(0)}%</label>
+              <label htmlFor="distortion-tone">
+                Tone: {(distortionTone * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 id="distortion-tone"
@@ -259,7 +310,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               />
             </div>
             <div className="control-group">
-              <label htmlFor="distortion-level">Level: {(distortionLevel * 100).toFixed(0)}%</label>
+              <label htmlFor="distortion-level">
+                Level: {(distortionLevel * 100).toFixed(0)}%
+              </label>
               <input
                 type="range"
                 id="distortion-level"
@@ -284,13 +337,17 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               checked={compressorEnabled}
               onChange={(e) => setCompressorEnabled(e.target.checked)}
             />
-            <span className="toggle-text">{compressorEnabled ? 'ON' : 'OFF'}</span>
+            <span className="toggle-text">
+              {compressorEnabled ? 'ON' : 'OFF'}
+            </span>
           </label>
         </div>
         {compressorEnabled && (
           <div className="effect-controls">
             <div className="control-group">
-              <label htmlFor="comp-threshold">Threshold: {compressorThreshold.toFixed(0)} dB</label>
+              <label htmlFor="comp-threshold">
+                Threshold: {compressorThreshold.toFixed(0)} dB
+              </label>
               <input
                 type="range"
                 id="comp-threshold"
@@ -298,11 +355,15 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
                 max="0"
                 step="1"
                 value={compressorThreshold}
-                onChange={(e) => setCompressorThreshold(parseFloat(e.target.value))}
+                onChange={(e) =>
+                  setCompressorThreshold(parseFloat(e.target.value))
+                }
               />
             </div>
             <div className="control-group">
-              <label htmlFor="comp-ratio">Ratio: {compressorRatio.toFixed(1)}:1</label>
+              <label htmlFor="comp-ratio">
+                Ratio: {compressorRatio.toFixed(1)}:1
+              </label>
               <input
                 type="range"
                 id="comp-ratio"
@@ -314,7 +375,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               />
             </div>
             <div className="control-group">
-              <label htmlFor="comp-attack">Attack: {(compressorAttack * 1000).toFixed(1)}ms</label>
+              <label htmlFor="comp-attack">
+                Attack: {(compressorAttack * 1000).toFixed(1)}ms
+              </label>
               <input
                 type="range"
                 id="comp-attack"
@@ -322,11 +385,15 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
                 max="0.1"
                 step="0.001"
                 value={compressorAttack}
-                onChange={(e) => setCompressorAttack(parseFloat(e.target.value))}
+                onChange={(e) =>
+                  setCompressorAttack(parseFloat(e.target.value))
+                }
               />
             </div>
             <div className="control-group">
-              <label htmlFor="comp-release">Release: {(compressorRelease * 1000).toFixed(0)}ms</label>
+              <label htmlFor="comp-release">
+                Release: {(compressorRelease * 1000).toFixed(0)}ms
+              </label>
               <input
                 type="range"
                 id="comp-release"
@@ -334,7 +401,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
                 max="1"
                 step="0.01"
                 value={compressorRelease}
-                onChange={(e) => setCompressorRelease(parseFloat(e.target.value))}
+                onChange={(e) =>
+                  setCompressorRelease(parseFloat(e.target.value))
+                }
               />
             </div>
           </div>

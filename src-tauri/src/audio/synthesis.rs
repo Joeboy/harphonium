@@ -59,6 +59,8 @@ pub struct FunDSPSynth {
     /// Fundsp node ids
     oscillator_nodeid: NodeId,
     adsr_nodeid: NodeId,
+    delay_nodeid: NodeId,
+
     /// Current waveform selection
     current_waveform: Waveform,
     /// Frequency control for the oscillator
@@ -156,6 +158,8 @@ impl FunDSPSynth {
             backend: Box::new(backend),
             oscillator_nodeid,
             adsr_nodeid,
+            delay_nodeid,
+
             current_waveform,
             frequency_var,
             key_down_var,
@@ -320,8 +324,14 @@ impl FunDSPSynth {
 
     /// Set delay time (in seconds)
     pub fn set_delay_time(&mut self, delay_time: f32) {
-        let clamped_delay_time = delay_time.clamp(0.0, 1.0); // 0ms to 1s
-        self.delay_time_var.set_value(clamped_delay_time);
+        if !self.enabled {
+            return; // No change needed
+        }
+        self.delay_time_var.set_value(delay_time.clamp(0.0, 5.0)); // Clamp to 0-5 seconds
+
+        let new_delay = Box::new(delay(self.delay_time_var.value()));
+        self.net.replace(self.delay_nodeid, new_delay);
+        self.net.commit();
     }
 
     /// Get delay time (in seconds)
