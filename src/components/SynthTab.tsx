@@ -237,27 +237,6 @@ const SynthTab: React.FC<SynthTabProps> = () => {
         </div>
       </div>
 
-      <div className="synth-section">
-        <h3>Effects</h3>
-        <div className="control-group">
-          <label>
-            <input type="checkbox" />
-            Reverb
-          </label>
-        </div>
-        <div className="control-group">
-          <label>
-            <input type="checkbox" />
-            Delay
-          </label>
-        </div>
-        <div className="control-group">
-          <label>
-            <input type="checkbox" />
-            Chorus
-          </label>
-        </div>
-      </div>
     </div>
   );
 };
