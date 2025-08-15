@@ -24,7 +24,7 @@ impl Waveform {
     pub fn as_str(&self) -> &'static str {
         match self {
             Waveform::Sine => "sine",
-            Waveform::Square => "square", 
+            Waveform::Square => "square",
             Waveform::Sawtooth => "sawtooth",
             Waveform::Triangle => "triangle",
         }
@@ -67,6 +67,11 @@ pub struct FunDSPSynth {
     key_down_var: shared::Shared,
     /// Master volume control (0.0 = silent, 1.0 = full volume)
     master_volume_var: shared::Shared,
+    /// ADSR envelope parameters
+    attack_var: shared::Shared,
+    decay_var: shared::Shared,
+    sustain_var: shared::Shared,
+    release_var: shared::Shared,
     /// Sample rate for proper delay calculation
     sample_rate: f32,
     /// Whether FunDSP is enabled (can be disabled if panics occur)
@@ -79,13 +84,19 @@ impl FunDSPSynth {
         let key_down_var = shared(0.0); // 0.0 = key up/silent, 1.0 = key down/playing
         let master_volume_var = shared(0.7); // Default to 70% volume
 
-        let adsr_envelope2 = adsr_live(0.02, 0.2, 0.6, 0.3);
+        // ADSR envelope parameters with reasonable defaults
+        let attack_var = shared(0.02); // 20ms attack
+        let decay_var = shared(0.2); // 200ms decay
+        let sustain_var = shared(0.6); // 60% sustain level
+        let release_var = shared(0.3); // 300ms release
 
+        // This adsr envelope should be fed by the attack / decay / sustain / release values, but I haven't figured out how to do that
+        let adsr_envelope2 = adsr_live(0.05, 0.2, 0.6, 0.3);
         let mut net = Net::new(0, 1);
 
         // Create the synthesis chain dynamically
         let freq_dc_id = net.push(Box::new(var(&frequency_var)));
-        
+
         // Start with sine wave as default
         let current_waveform = Waveform::default();
         let oscillator_id = net.push(current_waveform.create_oscillator());
@@ -109,8 +120,11 @@ impl FunDSPSynth {
         backend.set_sample_rate(sample_rate as f64);
         backend.reset();
 
-        println!("🎵 FunDSP initialized at {} Hz sample rate with {} waveform", 
-                 sample_rate, current_waveform.as_str());
+        println!(
+            "🎵 FunDSP initialized at {} Hz sample rate with {} waveform",
+            sample_rate,
+            current_waveform.as_str()
+        );
 
         Ok(FunDSPSynth {
             net,
@@ -120,6 +134,10 @@ impl FunDSPSynth {
             frequency_var,
             key_down_var,
             master_volume_var,
+            attack_var,
+            decay_var,
+            sustain_var,
+            release_var,
             sample_rate,
             enabled: true,
         })
@@ -154,14 +172,18 @@ impl FunDSPSynth {
         }
 
         // Replace the oscillator node with the new waveform
-        self.net.replace(self.oscillator_id, new_waveform.create_oscillator());
-        
+        self.net
+            .replace(self.oscillator_id, new_waveform.create_oscillator());
+
         // Commit the changes to the backend
         self.net.commit();
-        
+
         self.current_waveform = new_waveform;
 
-        println!("🔄 Switched to {} waveform using Net.replace()", new_waveform.as_str());
+        println!(
+            "🔄 Switched to {} waveform using Net.replace()",
+            new_waveform.as_str()
+        );
     }
 
     /// Get the current waveform
@@ -253,25 +275,75 @@ impl FunDSPSynth {
         self.master_volume_var.value()
     }
 
+    /// Set ADSR attack time (in seconds)
+    pub fn set_attack(&mut self, attack: f32) {
+        println!("Setting attack to {}", attack);
+        let clamped_attack = attack.clamp(0.001, 5.0); // 1ms to 5s
+        self.attack_var.set_value(clamped_attack);
+    }
+
+    /// Get ADSR attack time
+    pub fn get_attack(&self) -> f32 {
+        self.attack_var.value()
+    }
+
+    /// Set ADSR decay time (in seconds)
+    pub fn set_decay(&mut self, decay: f32) {
+        let clamped_decay = decay.clamp(0.001, 5.0); // 1ms to 5s
+        self.decay_var.set_value(clamped_decay);
+    }
+
+    /// Get ADSR decay time
+    pub fn get_decay(&self) -> f32 {
+        self.decay_var.value()
+    }
+
+    /// Set ADSR sustain level (0.0 to 1.0)
+    pub fn set_sustain(&mut self, sustain: f32) {
+        let clamped_sustain = sustain.clamp(0.0, 1.0);
+        self.sustain_var.set_value(clamped_sustain);
+    }
+
+    /// Get ADSR sustain level
+    pub fn get_sustain(&self) -> f32 {
+        self.sustain_var.value()
+    }
+
+    /// Set ADSR release time (in seconds)
+    pub fn set_release(&mut self, release: f32) {
+        let clamped_release = release.clamp(0.001, 10.0); // 1ms to 10s
+        self.release_var.set_value(clamped_release);
+    }
+
+    /// Get ADSR release time
+    pub fn get_release(&self) -> f32 {
+        self.release_var.value()
+    }
+
     /// Test function to verify dynamic waveform switching works
     #[cfg(test)]
     pub fn test_waveform_switching(&mut self) {
         println!("🧪 Testing dynamic waveform switching...");
-        
+
         // Test switching between all waveforms
-        let waveforms = [Waveform::Sine, Waveform::Square, Waveform::Sawtooth, Waveform::Triangle];
-        
+        let waveforms = [
+            Waveform::Sine,
+            Waveform::Square,
+            Waveform::Sawtooth,
+            Waveform::Triangle,
+        ];
+
         for waveform in waveforms.iter() {
             self.set_waveform(*waveform);
             assert_eq!(self.get_waveform(), *waveform);
             println!("✅ Successfully switched to {}", waveform.as_str());
-            
+
             // Generate a few samples to ensure it works
             for _ in 0..10 {
                 let _sample = self.get_sample();
             }
         }
-        
+
         println!("🎉 All waveform switches successful!");
     }
 }
@@ -286,7 +358,7 @@ mod tests {
         assert_eq!(Waveform::Square.as_str(), "square");
         assert_eq!(Waveform::Sawtooth.as_str(), "sawtooth");
         assert_eq!(Waveform::Triangle.as_str(), "triangle");
-        
+
         assert_eq!(Waveform::from_str("sine"), Some(Waveform::Sine));
         assert_eq!(Waveform::from_str("SQUARE"), Some(Waveform::Square));
         assert_eq!(Waveform::from_str("invalid"), None);

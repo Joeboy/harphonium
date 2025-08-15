@@ -105,6 +105,82 @@ impl AudioEngine {
             Waveform::default()
         }
     }
+
+    /// Set ADSR attack time
+    pub fn set_attack(&self, attack: f32) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.set_attack(attack);
+            Ok(())
+        } else {
+            Err("Failed to acquire synth lock".to_string())
+        }
+    }
+
+    /// Get ADSR attack time
+    pub fn get_attack(&self) -> f32 {
+        if let Ok(synth) = self.synth.lock() {
+            synth.get_attack()
+        } else {
+            0.02 // Default attack
+        }
+    }
+
+    /// Set ADSR decay time
+    pub fn set_decay(&self, decay: f32) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.set_decay(decay);
+            Ok(())
+        } else {
+            Err("Failed to acquire synth lock".to_string())
+        }
+    }
+
+    /// Get ADSR decay time
+    pub fn get_decay(&self) -> f32 {
+        if let Ok(synth) = self.synth.lock() {
+            synth.get_decay()
+        } else {
+            0.2 // Default decay
+        }
+    }
+
+    /// Set ADSR sustain level
+    pub fn set_sustain(&self, sustain: f32) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.set_sustain(sustain);
+            Ok(())
+        } else {
+            Err("Failed to acquire synth lock".to_string())
+        }
+    }
+
+    /// Get ADSR sustain level
+    pub fn get_sustain(&self) -> f32 {
+        if let Ok(synth) = self.synth.lock() {
+            synth.get_sustain()
+        } else {
+            0.6 // Default sustain
+        }
+    }
+
+    /// Set ADSR release time
+    pub fn set_release(&self, release: f32) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.set_release(release);
+            Ok(())
+        } else {
+            Err("Failed to acquire synth lock".to_string())
+        }
+    }
+
+    /// Get ADSR release time
+    pub fn get_release(&self) -> f32 {
+        if let Ok(synth) = self.synth.lock() {
+            synth.get_release()
+        } else {
+            0.3 // Default release
+        }
+    }
 }
 
 // Global audio engine
@@ -192,5 +268,97 @@ pub fn get_waveform() -> String {
         engine.get_waveform().as_str().to_string()
     } else {
         Waveform::default().as_str().to_string()
+    }
+}
+
+/// Set ADSR attack time
+pub fn set_attack(attack: f32) -> Result<(), String> {
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.set_attack(attack)
+    } else {
+        Err("Audio engine not initialized".to_string())
+    }
+}
+
+/// Get ADSR attack time
+pub fn get_attack() -> f32 {
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.get_attack()
+    } else {
+        0.02 // Default attack
+    }
+}
+
+/// Set ADSR decay time
+pub fn set_decay(decay: f32) -> Result<(), String> {
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.set_decay(decay)
+    } else {
+        Err("Audio engine not initialized".to_string())
+    }
+}
+
+/// Get ADSR decay time
+pub fn get_decay() -> f32 {
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.get_decay()
+    } else {
+        0.2 // Default decay
+    }
+}
+
+/// Set ADSR sustain level
+pub fn set_sustain(sustain: f32) -> Result<(), String> {
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.set_sustain(sustain)
+    } else {
+        Err("Audio engine not initialized".to_string())
+    }
+}
+
+/// Get ADSR sustain level
+pub fn get_sustain() -> f32 {
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.get_sustain()
+    } else {
+        0.6 // Default sustain
+    }
+}
+
+/// Set ADSR release time
+pub fn set_release(release: f32) -> Result<(), String> {
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.set_release(release)
+    } else {
+        Err("Audio engine not initialized".to_string())
+    }
+}
+
+/// Get ADSR release time
+pub fn get_release() -> f32 {
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.get_release()
+    } else {
+        0.3 // Default release
     }
 }

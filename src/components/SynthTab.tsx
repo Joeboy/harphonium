@@ -7,7 +7,9 @@ interface SynthTabProps {
 }
 
 const SynthTab: React.FC<SynthTabProps> = () => {
-  const [oscillatorType, setOscillatorType] = useState<'sine' | 'square' | 'sawtooth' | 'triangle'>('sine');
+  const [oscillatorType, setOscillatorType] = useState<
+    'sine' | 'square' | 'sawtooth' | 'triangle'
+  >('sine');
   const [attackTime, setAttackTime] = useState(0.1);
   const [decayTime, setDecayTime] = useState(0.2);
   const [sustainLevel, setSustainLevel] = useState(0.7);
@@ -23,10 +25,25 @@ const SynthTab: React.FC<SynthTabProps> = () => {
         // Load master volume
         const volume: number = await invoke('get_master_volume');
         setMasterVolume(Math.round(volume * 100)); // Convert from 0-1 to 0-100 for UI
-        
+
         // Load current waveform
         const waveform: string = await invoke('get_waveform');
-        setOscillatorType(waveform as 'sine' | 'square' | 'sawtooth' | 'triangle');
+        setOscillatorType(
+          waveform as 'sine' | 'square' | 'sawtooth' | 'triangle'
+        );
+
+        // Load ADSR values
+        const attack: number = await invoke('get_attack');
+        setAttackTime(attack);
+
+        const decay: number = await invoke('get_decay');
+        setDecayTime(decay);
+
+        const sustain: number = await invoke('get_sustain');
+        setSustainLevel(sustain);
+
+        const release: number = await invoke('get_release');
+        setReleaseTime(release);
       } catch (error) {
         console.error('Failed to load initial values:', error);
       }
@@ -45,7 +62,9 @@ const SynthTab: React.FC<SynthTabProps> = () => {
   };
 
   // Handle waveform changes
-  const handleWaveformChange = async (waveform: 'sine' | 'square' | 'sawtooth' | 'triangle') => {
+  const handleWaveformChange = async (
+    waveform: 'sine' | 'square' | 'sawtooth' | 'triangle'
+  ) => {
     setOscillatorType(waveform);
     try {
       await invoke('set_waveform', { waveform });
@@ -55,9 +74,48 @@ const SynthTab: React.FC<SynthTabProps> = () => {
     }
   };
 
+  // Handle ADSR attack changes
+  const handleAttackChange = async (attack: number) => {
+    setAttackTime(attack);
+    try {
+      await invoke('set_attack', { attack });
+    } catch (error) {
+      console.error('Failed to set attack:', error);
+    }
+  };
+
+  // Handle ADSR decay changes
+  const handleDecayChange = async (decay: number) => {
+    setDecayTime(decay);
+    try {
+      await invoke('set_decay', { decay });
+    } catch (error) {
+      console.error('Failed to set decay:', error);
+    }
+  };
+
+  // Handle ADSR sustain changes
+  const handleSustainChange = async (sustain: number) => {
+    setSustainLevel(sustain);
+    try {
+      await invoke('set_sustain', { sustain });
+    } catch (error) {
+      console.error('Failed to set sustain:', error);
+    }
+  };
+
+  // Handle ADSR release changes
+  const handleReleaseChange = async (release: number) => {
+    setReleaseTime(release);
+    try {
+      await invoke('set_release', { release });
+    } catch (error) {
+      console.error('Failed to set release:', error);
+    }
+  };
+
   return (
     <div className="synth-tab">
-      
       <div className="synth-section">
         <h3>Master</h3>
         <div className="control-group">
@@ -73,7 +131,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
           />
         </div>
       </div>
-      
+
       <div className="synth-section">
         <h3>Oscillator</h3>
         <div className="control-group">
@@ -81,7 +139,11 @@ const SynthTab: React.FC<SynthTabProps> = () => {
           <select
             id="oscillator-type"
             value={oscillatorType}
-            onChange={(e) => handleWaveformChange(e.target.value as 'sine' | 'square' | 'sawtooth' | 'triangle')}
+            onChange={(e) =>
+              handleWaveformChange(
+                e.target.value as 'sine' | 'square' | 'sawtooth' | 'triangle'
+              )
+            }
           >
             <option value="sine">Sine</option>
             <option value="square">Square</option>
@@ -102,7 +164,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
             max="2"
             step="0.01"
             value={attackTime}
-            onChange={(e) => setAttackTime(parseFloat(e.target.value))}
+            onChange={(e) => handleAttackChange(parseFloat(e.target.value))}
           />
         </div>
         <div className="control-group">
@@ -114,11 +176,13 @@ const SynthTab: React.FC<SynthTabProps> = () => {
             max="2"
             step="0.01"
             value={decayTime}
-            onChange={(e) => setDecayTime(parseFloat(e.target.value))}
+            onChange={(e) => handleDecayChange(parseFloat(e.target.value))}
           />
         </div>
         <div className="control-group">
-          <label htmlFor="sustain">Sustain: {(sustainLevel * 100).toFixed(0)}%</label>
+          <label htmlFor="sustain">
+            Sustain: {(sustainLevel * 100).toFixed(0)}%
+          </label>
           <input
             type="range"
             id="sustain"
@@ -126,7 +190,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
             max="1"
             step="0.01"
             value={sustainLevel}
-            onChange={(e) => setSustainLevel(parseFloat(e.target.value))}
+            onChange={(e) => handleSustainChange(parseFloat(e.target.value))}
           />
         </div>
         <div className="control-group">
@@ -138,7 +202,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
             max="3"
             step="0.01"
             value={releaseTime}
-            onChange={(e) => setReleaseTime(parseFloat(e.target.value))}
+            onChange={(e) => handleReleaseChange(parseFloat(e.target.value))}
           />
         </div>
       </div>
@@ -158,7 +222,9 @@ const SynthTab: React.FC<SynthTabProps> = () => {
           />
         </div>
         <div className="control-group">
-          <label htmlFor="resonance">Resonance: {(filterResonance * 100).toFixed(0)}%</label>
+          <label htmlFor="resonance">
+            Resonance: {(filterResonance * 100).toFixed(0)}%
+          </label>
           <input
             type="range"
             id="resonance"
