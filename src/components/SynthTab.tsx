@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import throttle from 'lodash.throttle';
+
+const SLIDER_THROTTLE_MS = 100;
 import { invoke } from '@tauri-apps/api/core';
 import './SynthTab.css';
 
@@ -51,14 +54,22 @@ const SynthTab: React.FC<SynthTabProps> = () => {
     loadInitialValues();
   }, []);
 
-  // Handle master volume changes
-  const handleMasterVolumeChange = async (value: number) => {
+  // Throttled master volume handler (20Hz)
+  const throttledSetMasterVolume = useMemo(
+    () =>
+      throttle(async (value: number) => {
+        try {
+          await invoke('set_master_volume', { volume: value / 100 });
+        } catch (error) {
+          console.error('Failed to set master volume:', error);
+        }
+      }, SLIDER_THROTTLE_MS),
+    []
+  );
+
+  const handleMasterVolumeChange = (value: number) => {
     setMasterVolume(value);
-    try {
-      await invoke('set_master_volume', { volume: value / 100 }); // Convert from 0-100 to 0-1
-    } catch (error) {
-      console.error('Failed to set master volume:', error);
-    }
+    throttledSetMasterVolume(value);
   };
 
   // Handle waveform changes
@@ -74,44 +85,71 @@ const SynthTab: React.FC<SynthTabProps> = () => {
     }
   };
 
-  // Handle ADSR attack changes
-  const handleAttackChange = async (attack: number) => {
+  // Throttled ADSR handlers (20Hz)
+  const throttledSetAttack = useMemo(
+    () =>
+      throttle(async (attack: number) => {
+        try {
+          await invoke('set_attack', { attack });
+        } catch (error) {
+          console.error('Failed to set attack:', error);
+        }
+      }, SLIDER_THROTTLE_MS),
+    []
+  );
+
+  const throttledSetDecay = useMemo(
+    () =>
+      throttle(async (decay: number) => {
+        try {
+          await invoke('set_decay', { decay });
+        } catch (error) {
+          console.error('Failed to set decay:', error);
+        }
+      }, SLIDER_THROTTLE_MS),
+    []
+  );
+
+  const throttledSetSustain = useMemo(
+    () =>
+      throttle(async (sustain: number) => {
+        try {
+          await invoke('set_sustain', { sustain });
+        } catch (error) {
+          console.error('Failed to set sustain:', error);
+        }
+      }, SLIDER_THROTTLE_MS),
+    []
+  );
+
+  const throttledSetRelease = useMemo(
+    () =>
+      throttle(async (release: number) => {
+        try {
+          await invoke('set_release', { release });
+        } catch (error) {
+          console.error('Failed to set release:', error);
+        }
+      }, SLIDER_THROTTLE_MS),
+    []
+  );
+
+  // Handle ADSR changes (update state immediately, throttle backend update)
+  const handleAttackChange = (attack: number) => {
     setAttackTime(attack);
-    try {
-      await invoke('set_attack', { attack });
-    } catch (error) {
-      console.error('Failed to set attack:', error);
-    }
+    throttledSetAttack(attack);
   };
-
-  // Handle ADSR decay changes
-  const handleDecayChange = async (decay: number) => {
+  const handleDecayChange = (decay: number) => {
     setDecayTime(decay);
-    try {
-      await invoke('set_decay', { decay });
-    } catch (error) {
-      console.error('Failed to set decay:', error);
-    }
+    throttledSetDecay(decay);
   };
-
-  // Handle ADSR sustain changes
-  const handleSustainChange = async (sustain: number) => {
+  const handleSustainChange = (sustain: number) => {
     setSustainLevel(sustain);
-    try {
-      await invoke('set_sustain', { sustain });
-    } catch (error) {
-      console.error('Failed to set sustain:', error);
-    }
+    throttledSetSustain(sustain);
   };
-
-  // Handle ADSR release changes
-  const handleReleaseChange = async (release: number) => {
+  const handleReleaseChange = (release: number) => {
     setReleaseTime(release);
-    try {
-      await invoke('set_release', { release });
-    } catch (error) {
-      console.error('Failed to set release:', error);
-    }
+    throttledSetRelease(release);
   };
 
   return (
@@ -236,7 +274,6 @@ const SynthTab: React.FC<SynthTabProps> = () => {
           />
         </div>
       </div>
-
     </div>
   );
 };
