@@ -232,11 +232,27 @@ impl FunDSPSynth {
         self.master_volume_var.value()
     }
 
-    /// Set ADSR attack time (in seconds)
+    pub fn set_adsr(&mut self) {
+        if !self.enabled {
+            return; // No change needed
+        }
+
+        let attack = self.attack_var.value();
+        let decay = self.decay_var.value();
+        let sustain = self.sustain_var.value();
+        let release = self.release_var.value();
+
+        let new_adsr = Box::new(adsr_live(attack, decay, sustain, release));
+        self.net.replace(self.adsr_nodeid, new_adsr);
+
+        self.net.commit();
+    }
+
     pub fn set_attack(&mut self, attack: f32) {
         println!("Setting attack to {}", attack);
         let clamped_attack = attack.clamp(0.001, 5.0); // 1ms to 5s
         self.attack_var.set_value(clamped_attack);
+        self.set_adsr();
     }
 
     /// Get ADSR attack time
@@ -248,6 +264,7 @@ impl FunDSPSynth {
     pub fn set_decay(&mut self, decay: f32) {
         let clamped_decay = decay.clamp(0.001, 5.0); // 1ms to 5s
         self.decay_var.set_value(clamped_decay);
+        self.set_adsr();
     }
 
     /// Get ADSR decay time
@@ -259,6 +276,7 @@ impl FunDSPSynth {
     pub fn set_sustain(&mut self, sustain: f32) {
         let clamped_sustain = sustain.clamp(0.0, 1.0);
         self.sustain_var.set_value(clamped_sustain);
+        self.set_adsr();
     }
 
     /// Get ADSR sustain level
@@ -270,6 +288,7 @@ impl FunDSPSynth {
     pub fn set_release(&mut self, release: f32) {
         let clamped_release = release.clamp(0.001, 10.0); // 1ms to 10s
         self.release_var.set_value(clamped_release);
+        self.set_adsr();
     }
 
     /// Get ADSR release time
