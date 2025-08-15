@@ -5,6 +5,7 @@ node_modules/
 # Tauri build artifacts
 src-tauri/target/
 src-tauri/gen/
+src-tauri/.cargo/config.toml
 
 # Build outputs
 dist/
