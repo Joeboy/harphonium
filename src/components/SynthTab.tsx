@@ -155,7 +155,6 @@ const SynthTab: React.FC<SynthTabProps> = () => {
   return (
     <div className="synth-tab">
       <div className="synth-section">
-        <h3>Master</h3>
         <div className="control-group">
           <label htmlFor="master-volume">Master Volume: {masterVolume}%</label>
           <input
@@ -171,7 +170,6 @@ const SynthTab: React.FC<SynthTabProps> = () => {
       </div>
 
       <div className="synth-section">
-        <h3>Oscillator</h3>
         <div className="control-group">
           <label htmlFor="oscillator-type">Waveform:</label>
           <select
@@ -192,7 +190,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
       </div>
 
       <div className="synth-section">
-        <h3>ADSR Envelope</h3>
+        <h3>ADSR</h3>
         <div className="control-group">
           <label htmlFor="attack">Attack: {attackTime.toFixed(2)}s</label>
           <input
@@ -246,7 +244,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
       </div>
 
       <div className="synth-section">
-        <h3>Filter</h3>
+        <h3>Filter (TODO)</h3>
         <div className="control-group">
           <label htmlFor="cutoff">Cutoff: {filterCutoff.toFixed(0)} Hz</label>
           <input
