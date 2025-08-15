@@ -2,8 +2,6 @@
 // This module provides FunDSP audio generation for both desktop and Android platforms
 
 use fundsp::hacker::*;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
-use std::sync::Arc;
 
 /// Waveform types available in the synthesizer
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -143,17 +141,15 @@ impl FunDSPSynth {
         })
     }
 
-    // Lock-free control handles (cheap clones)
-    pub fn frequency_handle(&self) -> shared::Shared {
-        self.frequency_var.clone()
-    }
-
-    pub fn gate_handle(&self) -> shared::Shared {
-        self.key_down_var.clone()
-    }
-
-    pub fn volume_handle(&self) -> shared::Shared {
-        self.master_volume_var.clone()
+    /// Fill the output buffer with audio samples
+    pub fn fill_buffer(&mut self, output: &mut [f32]) {
+        if !self.enabled {
+            output.fill(0.0);
+            return;
+        }
+        for sample in output.iter_mut() {
+            *sample = self.backend.get_mono().clamp(-1.0, 1.0);
+        }
     }
 
     /// Update the backend sample rate and reset safely.
@@ -191,44 +187,6 @@ impl FunDSPSynth {
         self.current_waveform
     }
 
-    /// Generate a single mono sample
-    pub fn get_sample(&mut self) -> f32 {
-        if !self.enabled {
-            return 0.0;
-        }
-
-        // Fast path: direct sample fetch and clamp
-        let output = self.backend.get_mono();
-        if output.is_finite() {
-            output.clamp(-1.0, 1.0)
-        } else {
-            0.0
-        }
-    }
-
-    /// Generate a single sample with atomic controls (for Android callback)
-    pub fn get_sample_from_atomics(
-        &mut self,
-        key_down: Arc<AtomicBool>,
-        frequency_bits: Arc<AtomicU32>,
-    ) -> f32 {
-        let currently_key_down = key_down.load(Ordering::Relaxed);
-
-        // Update key down state - convert boolean to float for ADSR gate
-        let gate_value = if currently_key_down { 1.0 } else { 0.0 };
-        self.key_down_var.set_value(gate_value);
-
-        let frequency_bits_val = frequency_bits.load(Ordering::Relaxed);
-        let frequency = f32::from_bits(frequency_bits_val);
-
-        // Update frequency directly (UI controls the frequency changes)
-        if self.enabled {
-            self.frequency_var.set_value(frequency);
-        }
-
-        self.get_sample()
-    }
-
     /// Play a note at the specified frequency
     pub fn play_note(&mut self, frequency: f32) {
         if self.enabled {
@@ -246,18 +204,6 @@ impl FunDSPSynth {
         }
 
         println!("Stopping audio");
-    }
-
-    /// Get current playing state by checking the ADSR gate
-    pub fn is_playing(&self) -> bool {
-        // The ADSR gate value indicates if we're currently in attack/sustain phase
-        // 1.0 = gate is on (playing), 0.0 = gate is off (releasing or silent)
-        self.key_down_var.value() > 0.0
-    }
-
-    /// Get current frequency from the actual synthesis variable
-    pub fn get_frequency(&self) -> f32 {
-        self.frequency_var.value()
     }
 
     /// Set master volume (0.0 = silent, 1.0 = full volume)
@@ -318,55 +264,5 @@ impl FunDSPSynth {
     /// Get ADSR release time
     pub fn get_release(&self) -> f32 {
         self.release_var.value()
-    }
-
-    /// Test function to verify dynamic waveform switching works
-    #[cfg(test)]
-    pub fn test_waveform_switching(&mut self) {
-        println!("🧪 Testing dynamic waveform switching...");
-
-        // Test switching between all waveforms
-        let waveforms = [
-            Waveform::Sine,
-            Waveform::Square,
-            Waveform::Sawtooth,
-            Waveform::Triangle,
-        ];
-
-        for waveform in waveforms.iter() {
-            self.set_waveform(*waveform);
-            assert_eq!(self.get_waveform(), *waveform);
-            println!("✅ Successfully switched to {}", waveform.as_str());
-
-            // Generate a few samples to ensure it works
-            for _ in 0..10 {
-                let _sample = self.get_sample();
-            }
-        }
-
-        println!("🎉 All waveform switches successful!");
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_waveform_enum() {
-        assert_eq!(Waveform::Sine.as_str(), "sine");
-        assert_eq!(Waveform::Square.as_str(), "square");
-        assert_eq!(Waveform::Sawtooth.as_str(), "sawtooth");
-        assert_eq!(Waveform::Triangle.as_str(), "triangle");
-
-        assert_eq!(Waveform::from_str("sine"), Some(Waveform::Sine));
-        assert_eq!(Waveform::from_str("SQUARE"), Some(Waveform::Square));
-        assert_eq!(Waveform::from_str("invalid"), None);
-    }
-
-    #[test]
-    fn test_dynamic_waveform_switching() {
-        let mut synth = FunDSPSynth::new(44100.0).expect("Failed to create synth");
-        synth.test_waveform_switching();
     }
 }

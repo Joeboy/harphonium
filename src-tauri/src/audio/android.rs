@@ -28,9 +28,7 @@ pub fn start_audio_stream(
             // Generate audio using FunDSP synthesis without locking if unavailable
             match self.synth.try_lock() {
                 Ok(mut synth_guard) => {
-                    for sample in frames.iter_mut() {
-                        *sample = synth_guard.get_sample();
-                    }
+                    synth_guard.fill_buffer(frames);
                 }
                 Err(_) => {
                     // Fill with silence on contention to avoid glitches / priority inversion

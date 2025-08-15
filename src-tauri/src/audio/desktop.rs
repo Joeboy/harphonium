@@ -33,15 +33,14 @@ pub fn start_audio_stream(
             match synth.try_lock() {
                 Ok(mut synth_guard) => {
                     for frame in data.chunks_mut(config.channels as usize) {
-                        let sample = synth_guard.get_sample();
-                        for channel_sample in frame.iter_mut() {
-                            *channel_sample = sample;
-                        }
+                        synth_guard.fill_buffer(frame);
                     }
                 }
                 Err(_) => {
                     // On contention, output silence this cycle
-                    for s in data.iter_mut() { *s = 0.0; }
+                    for s in data.iter_mut() {
+                        *s = 0.0;
+                    }
                 }
             }
         },
