@@ -16,14 +16,14 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
   const [reverbDryLevel, setReverbDryLevel] = useState(0.7);
 
   // Delay controls
-  const [delayEnabled, setDelayEnabled] = useState(false);
+  // ...existing code...
   const [delayTime, setDelayTime] = useState(0.25);
 
-  // Throttled handler to avoid spamming backend
-  const [delayFeedback, setDelayFeedback] = useState(0.4);
+  // ...existing code...
   const [delayWetLevel, setDelayWetLevel] = useState(0.3);
 
-  // Throttled delay time handler (20Hz)
+
+  // Throttled delay time and mix handlers (20Hz)
   const SLIDER_THROTTLE_MS = 100;
   const throttledSetDelayTime = useMemo(
     () =>
@@ -36,10 +36,26 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
       }, SLIDER_THROTTLE_MS),
     []
   );
+  const throttledSetDelayMix = useMemo(
+    () =>
+      throttle(async (value: number) => {
+        try {
+          await invoke('set_delay_mix', { delayMix: value });
+        } catch (error) {
+          console.error('Failed to set delay mix:', error);
+        }
+      }, SLIDER_THROTTLE_MS),
+    []
+  );
 
   const handleDelayTimeChange = (value: number) => {
     setDelayTime(value);
     throttledSetDelayTime(value);
+  };
+
+  const handleDelayMixChange = (value: number) => {
+    setDelayWetLevel(value);
+    throttledSetDelayMix(value);
   };
 
   // Chorus controls
@@ -144,63 +160,39 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
       <div className="effect-section">
         <div className="effect-header">
           <h3>Delay</h3>
-          <label className="effect-toggle">
-            <input
-              type="checkbox"
-              checked={delayEnabled}
-              onChange={(e) => setDelayEnabled(e.target.checked)}
-            />
-            <span className="toggle-text">{delayEnabled ? 'ON' : 'OFF'}</span>
-          </label>
         </div>
-        {delayEnabled && (
-          <div className="effect-controls">
-            <div className="control-group">
-              <label htmlFor="delay-time">
-                Time: {(delayTime * 1000).toFixed(0)}ms
-              </label>
-              <input
-                type="range"
-                id="delay-time"
-                min="0.01"
-                max="2"
-                step="0.01"
-                value={delayTime}
-                onChange={(e) =>
-                  handleDelayTimeChange(parseFloat(e.target.value))
-                }
-              />
-            </div>
-            <div className="control-group">
-              <label htmlFor="delay-feedback">
-                Feedback: {(delayFeedback * 100).toFixed(0)}%
-              </label>
-              <input
-                type="range"
-                id="delay-feedback"
-                min="0"
-                max="0.95"
-                step="0.01"
-                value={delayFeedback}
-                onChange={(e) => setDelayFeedback(parseFloat(e.target.value))}
-              />
-            </div>
-            <div className="control-group">
-              <label htmlFor="delay-wet">
-                Mix: {(delayWetLevel * 100).toFixed(0)}%
-              </label>
-              <input
-                type="range"
-                id="delay-wet"
-                min="0"
-                max="1"
-                step="0.01"
-                value={delayWetLevel}
-                onChange={(e) => setDelayWetLevel(parseFloat(e.target.value))}
-              />
-            </div>
+        <div className="effect-controls">
+          <div className="control-group">
+            <label htmlFor="delay-time">
+              Time: {(delayTime * 1000).toFixed(0)}ms
+            </label>
+            <input
+              type="range"
+              id="delay-time"
+              min="0.01"
+              max="2"
+              step="0.01"
+              value={delayTime}
+              onChange={(e) =>
+                handleDelayTimeChange(parseFloat(e.target.value))
+              }
+            />
           </div>
-        )}
+          <div className="control-group">
+            <label htmlFor="delay-wet">
+              Mix: {(delayWetLevel * 100).toFixed(0)}%
+            </label>
+            <input
+              type="range"
+              id="delay-wet"
+              min="0"
+              max="1"
+              step="0.01"
+              value={delayWetLevel}
+              onChange={(e) => handleDelayMixChange(parseFloat(e.target.value))}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Chorus Section */}
