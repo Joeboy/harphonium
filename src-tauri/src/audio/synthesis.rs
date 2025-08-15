@@ -55,8 +55,10 @@ pub struct FunDSPSynth {
     net: Net,
     /// FunDSP backend for audio processing
     backend: Box<dyn AudioUnit + Send>,
-    /// ID of the oscillator node in the net
-    oscillator_id: NodeId,
+
+    /// Fundsp node ids
+    oscillator_nodeid: NodeId,
+    adsr_nodeid: NodeId,
     /// Current waveform selection
     current_waveform: Waveform,
     /// Frequency control for the oscillator
@@ -83,25 +85,33 @@ impl FunDSPSynth {
         let master_volume_var = shared(0.7); // Default to 70% volume
 
         // ADSR envelope parameters with reasonable defaults
-        let attack_var = shared(0.02); // 20ms attack
+        let attack_var = shared(0.1); // 20ms attack
         let decay_var = shared(0.2); // 200ms decay
         let sustain_var = shared(0.6); // 60% sustain level
         let release_var = shared(0.3); // 300ms release
 
-        // This adsr envelope should be fed by the attack / decay / sustain / release values, but I haven't figured out how to do that
-        let adsr_envelope2 = adsr_live(0.05, 0.2, 0.6, 0.3);
+        let adsr_envelope = adsr_live(
+            attack_var.value(),
+            decay_var.value(),
+            sustain_var.value(),
+            release_var.value(),
+        );
         let mut net = Net::new(0, 1);
 
         // Create the synthesis chain dynamically
         let freq_dc_id = net.push(Box::new(var(&frequency_var)));
 
-        // Start with sine wave as default
         let current_waveform = Waveform::default();
-        let oscillator_id = net.push(current_waveform.create_oscillator());
-        net.pipe_all(freq_dc_id, oscillator_id);
+        let oscillator_nodeid = net.push(current_waveform.create_oscillator());
+        net.pipe_all(freq_dc_id, oscillator_nodeid);
 
-        let adsr_id = net.push(Box::new(pass() * (var(&key_down_var) >> adsr_envelope2)));
-        net.pipe_all(oscillator_id, adsr_id);
+        let key_down_nodeid = net.push(Box::new(var(&key_down_var)));
+        let adsr_nodeid = net.push(Box::new(adsr_envelope));
+        net.pipe_all(key_down_nodeid, adsr_nodeid);
+
+        let vca_nodeid = net.push(Box::new(pass() * pass()));
+        net.connect(oscillator_nodeid, 0, vca_nodeid, 0);
+        net.connect(adsr_nodeid, 0, vca_nodeid, 1);
 
         let tail = split()
             >> (pass() + delay(0.3) * 0.3)
@@ -109,10 +119,10 @@ impl FunDSPSynth {
             >> mul(0.4)
             >> (pass() * var(&master_volume_var));
 
-        let tail_id = net.push(Box::new(tail));
-        net.pipe_all(adsr_id, tail_id);
+        let tail_nodeid = net.push(Box::new(tail));
+        net.pipe_all(vca_nodeid, tail_nodeid);
 
-        net.pipe_output(tail_id);
+        net.pipe_output(tail_nodeid);
 
         let mut backend = net.backend();
         backend.set_sample_rate(sample_rate as f64);
@@ -127,7 +137,8 @@ impl FunDSPSynth {
         Ok(FunDSPSynth {
             net,
             backend: Box::new(backend),
-            oscillator_id,
+            oscillator_nodeid,
+            adsr_nodeid,
             current_waveform,
             frequency_var,
             key_down_var,
@@ -169,7 +180,7 @@ impl FunDSPSynth {
 
         // Replace the oscillator node with the new waveform
         self.net
-            .replace(self.oscillator_id, new_waveform.create_oscillator());
+            .replace(self.oscillator_nodeid, new_waveform.create_oscillator());
 
         // Commit the changes to the backend
         self.net.commit();
