@@ -79,6 +79,7 @@ pub struct FunDSPSynth {
     release_var: shared::Shared,
 
     delay_time_var: shared::Shared,
+    delay_feedback_var: shared::Shared,
     delay_mix_var: shared::Shared,
     /// Sample rate for proper delay calculation
     sample_rate: f32,
@@ -105,7 +106,8 @@ impl FunDSPSynth {
             release_var.value(),
         );
 
-        let delay_time_var = shared(0.8);
+        let delay_time_var = shared(0.3);
+        let delay_feedback_var = shared(0.4);
         let delay_mix_var = shared(0.3);
 
         let mut net = Net::new(0, 1);
@@ -126,23 +128,41 @@ impl FunDSPSynth {
         net.connect(adsr_nodeid, 0, vca_nodeid, 1);
 
         // Delay stuff
+
+        // Create mixer to feed delayed signal back to the delay node, mixed with the dry input signal
+        let delay_feedback_gain_nodeid = net.push(Box::new(pass() * var(&delay_feedback_var)));
+        let delay_feedback_mixer_nodeid = net.push(Box::new((pass() + pass())));
+        net.connect(
+            delay_feedback_gain_nodeid,
+            0,
+            delay_feedback_mixer_nodeid,
+            1,
+        );
+
         // Create delay node
         let delay_nodeid = net.push(Box::new(delay(delay_time_var.value())));
+        // Connect the delay feedback mixer to the delay node
+        net.connect(delay_feedback_mixer_nodeid, 0, delay_nodeid, 0);
         // Create delay gain node
         let delay_gain_nodeid = net.push(Box::new(pass() * var(&delay_mix_var)));
-        // Create mixer node
-        let delay_mixer_nodeid = net.push(Box::new(pass() + pass()));
-        // Wire direct input into delay mixer node:
-        net.connect(vca_nodeid, 0, delay_mixer_nodeid, 0);
-        // Wire input into delay node
-        net.connect(vca_nodeid, 0, delay_nodeid, 0);
-        // Wire delay output into delay gain node
+        // Create output mixer node
+        // Mixes direct input, delay output
+        let delay_output_mixer_nodeid = net.push(Box::new(pass() + pass()));
+        // Wire direct input into output mixer node:
+        net.connect(vca_nodeid, 0, delay_output_mixer_nodeid, 0);
+        // Wire input into delay feedback mixer
+        net.connect(vca_nodeid, 0, delay_feedback_mixer_nodeid, 0);
+        // Wire delay output into delay mix node
         net.connect(delay_nodeid, 0, delay_gain_nodeid, 0);
-        // Wire delay output into delay mixer node
-        net.connect(delay_gain_nodeid, 0, delay_mixer_nodeid, 1);
+        // Wire "gained" delay output into delay outputmixer node
+        net.connect(delay_gain_nodeid, 0, delay_output_mixer_nodeid, 1);
+
+        // Wire delay output into delay feedback mixer
+        net.connect(delay_nodeid, 0, delay_feedback_gain_nodeid, 0);
+        // net.connect(delay_feedback_mixer_nodeid, 0, delay_mixer_nodeid, 2);
 
         let master_vol_nodeid = net.push(Box::new(split() >> (pass() * var(&master_volume_var))));
-        net.pipe_all(delay_mixer_nodeid, master_vol_nodeid);
+        net.pipe_all(delay_output_mixer_nodeid, master_vol_nodeid);
 
         net.pipe_output(master_vol_nodeid);
 
@@ -174,6 +194,7 @@ impl FunDSPSynth {
             release_var,
 
             delay_time_var,
+            delay_feedback_var,
             delay_mix_var,
 
             sample_rate,

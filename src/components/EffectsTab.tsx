@@ -22,7 +22,6 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
   // ...existing code...
   const [delayWetLevel, setDelayWetLevel] = useState(0.3);
 
-
   // Throttled delay time and mix handlers (20Hz)
   const SLIDER_THROTTLE_MS = 100;
   const throttledSetDelayTime = useMemo(
@@ -79,8 +78,6 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
 
   return (
     <div className="effects-tab">
-      <h2>Audio Effects</h2>
-
       {/* Reverb Section */}
       <div className="effect-section">
         <div className="effect-header">
