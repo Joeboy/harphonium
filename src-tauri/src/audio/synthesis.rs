@@ -81,6 +81,11 @@ pub struct FunDSPSynth {
     delay_time_var: shared::Shared,
     delay_feedback_var: shared::Shared,
     delay_mix_var: shared::Shared,
+
+    /// Filter parameters
+    filter_cutoff_var: shared::Shared,
+    filter_resonance_var: shared::Shared,
+
     /// Sample rate for proper delay calculation
     sample_rate: f32,
     /// Whether FunDSP is enabled (can be disabled if panics occur)
@@ -99,16 +104,12 @@ impl FunDSPSynth {
         let sustain_var = shared(0.6); // 60% sustain level
         let release_var = shared(0.3); // 300ms release
 
-        let adsr_envelope = adsr_live(
-            attack_var.value(),
-            decay_var.value(),
-            sustain_var.value(),
-            release_var.value(),
-        );
-
         let delay_time_var = shared(0.3);
         let delay_feedback_var = shared(0.4);
         let delay_mix_var = shared(0.2);
+
+        let filter_cutoff_var = shared(1000.0);
+        let filter_resonance_var = shared(0.1);
 
         let mut net = Net::new(0, 1);
 
@@ -119,10 +120,16 @@ impl FunDSPSynth {
         let oscillator_nodeid = net.push(current_waveform.create_oscillator());
         net.pipe_all(freq_dc_id, oscillator_nodeid);
 
+        // ADSR
         let key_down_nodeid = net.push(Box::new(var(&key_down_var)));
+        let adsr_envelope = adsr_live(
+            attack_var.value(),
+            decay_var.value(),
+            sustain_var.value(),
+            release_var.value(),
+        );
         let adsr_nodeid = net.push(Box::new(adsr_envelope));
         net.pipe_all(key_down_nodeid, adsr_nodeid);
-
         let vca_nodeid = net.push(Box::new(pass() * pass()));
         net.connect(oscillator_nodeid, 0, vca_nodeid, 0);
         net.connect(adsr_nodeid, 0, vca_nodeid, 1);
@@ -161,8 +168,16 @@ impl FunDSPSynth {
         net.connect(delay_nodeid, 0, delay_feedback_gain_nodeid, 0);
         // net.connect(delay_feedback_mixer_nodeid, 0, delay_mixer_nodeid, 2);
 
+        // Filter
+        let filter_nodeid = net.push(Box::new(lowpass()));
+        net.connect(delay_output_mixer_nodeid, 0, filter_nodeid, 0);
+        let filter_cutoff_nodeid = net.push(Box::new(var(&filter_cutoff_var)));
+        net.connect(filter_cutoff_nodeid, 0, filter_nodeid, 1);
+        let filter_resonance_nodeid = net.push(Box::new(var(&filter_resonance_var)));
+        net.connect(filter_resonance_nodeid, 0, filter_nodeid, 2);
+
         let master_vol_nodeid = net.push(Box::new(split() >> (pass() * var(&master_volume_var))));
-        net.pipe_all(delay_output_mixer_nodeid, master_vol_nodeid);
+        net.pipe_all(filter_nodeid, master_vol_nodeid);
 
         net.pipe_output(master_vol_nodeid);
 
@@ -196,6 +211,9 @@ impl FunDSPSynth {
             delay_time_var,
             delay_feedback_var,
             delay_mix_var,
+
+            filter_cutoff_var,
+            filter_resonance_var,
 
             sample_rate,
             enabled: true,
