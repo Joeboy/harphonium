@@ -79,11 +79,41 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
 
 
 
-  // Single handler for the whole keyboard
+  // Calculate note pitch from horizontal position
   const handleKeyboardStart = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setTimeout(() => onNoteStart(440), 0); // For now, always use 440 Hz
+
+    let clientX: number;
+    if ('touches' in e && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+    } else if ('clientX' in e) {
+      clientX = e.clientX;
+    } else {
+      clientX = 0;
+    }
+
+    const container = containerRef.current;
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      let clientY: number;
+      if ('touches' in e && e.touches.length > 0) {
+        clientY = e.touches[0].clientY;
+      } else if ('clientY' in e) {
+        clientY = e.clientY;
+      } else {
+        clientY = 0;
+      }
+      const y = clientY - rect.top;
+      const height = rect.height;
+      // Map y to a key index (top = lowest note, bottom = highest)
+      const keyIndex = Math.floor((y / height) * keys.length);
+      const clampedIndex = Math.max(0, Math.min(keys.length - 1, keyIndex));
+      const freq = keys[clampedIndex].frequency;
+      setTimeout(() => onNoteStart(freq), 0);
+    } else {
+      setTimeout(() => onNoteStart(440), 0);
+    }
   };
 
   const handleKeyboardEnd = (e: React.TouchEvent | React.MouseEvent) => {
