@@ -46,9 +46,10 @@ function App() {
 
   async function playNote(frequency: number) {
     try {
-      console.log(`Playing note: ${frequency} Hz`);
+      const freqStr = frequency.toFixed(2).replace(/\.00$/, '');
+      console.log(`Playing note: ${freqStr} Hz`);
       await invoke('play_note', { frequency: frequency });
-      setSynthState(`🔊 Playing: ${frequency} Hz`);
+      setSynthState(`🔊 Playing: ${freqStr} Hz`);
     } catch (error) {
       setSynthState(`Error: ${error}`);
     }
@@ -58,11 +59,19 @@ function App() {
     try {
       console.log('Stopping note');
       await invoke('stop_note');
-      setSynthState('🔇 Stopped');
+      setSynthState('🔇 No keys down');
     } catch (error) {
       setSynthState(`Error: ${error}`);
     }
   }
+
+  // Scroll tab-content-container to top on tab change
+  useEffect(() => {
+    const container = document.querySelector('.tab-content-container');
+    if (container) {
+      container.scrollTop = 0;
+    }
+  }, [activeTab]);
 
   const renderTabContent = () => {
     switch (activeTab) {

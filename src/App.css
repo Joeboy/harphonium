@@ -125,7 +125,7 @@ body {
 }
 
 .tab-content {
-  padding: 30px;
+  padding: 8px 4px;
   max-width: 100%;
 }
 
@@ -207,7 +207,7 @@ h3 {
 }
 
 .setting-item {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   border-radius: 10px;
   border: 1px solid #444;
   padding: 8px;
@@ -268,7 +268,7 @@ h3 {
 /* Mobile responsive design - keep horizontal layout */
 @media (max-width: 768px) {
   .tab-content {
-    padding: 20px;
+    padding: 8px 4px;
   }
 
   h1 {
@@ -287,10 +287,14 @@ h3 {
   }
 
   .tab-content {
-    padding: 15px;
+    padding: 8px 4px;
   }
 
   h1 {
     font-size: 1.8rem;
   }
+}
+
+.vertical-spacer {
+  padding-bottom: 20px;
 }

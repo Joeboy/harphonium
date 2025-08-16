@@ -1,4 +1,5 @@
 import React from 'react';
+import './KeyboardTab.css';
 
 interface KeyboardTabProps {
   octaves: number;
@@ -109,29 +110,29 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
     <div className="tab-content">
       <div className="setting-item">
         <label>Keyboard type</label>
-        <div>
-          <label style={{ marginRight: '1em' }}>
-            <input
-              type="radio"
-              name="keyboard-type"
-              value="keys"
-              checked={keyboardType === 'keys'}
-              onChange={handleKeyboardTypeChange}
-            />
-            Keys
-          </label>
+        <label style={{ marginRight: '1em' }}>
+          <input
+            type="radio"
+            name="keyboard-type"
+            value="keys"
+            checked={keyboardType === 'keys'}
+            onChange={handleKeyboardTypeChange}
+          />
+          Keys
+        </label>
 
-          <label>
-            <input
-              type="radio"
-              name="keyboard-type"
-              value="fretless"
-              checked={keyboardType === 'fretless'}
-              onChange={handleKeyboardTypeChange}
-            />
-            Fretless
-          </label>
-        </div>
+        <label>
+          <input
+            type="radio"
+            name="keyboard-type"
+            value="fretless"
+            checked={keyboardType === 'fretless'}
+            onChange={handleKeyboardTypeChange}
+          />
+          Fretless
+        </label>
+      </div>
+      <div className="setting-item">
         <label>Octaves</label>
         <select value={octaves} onChange={handleOctavesChange}>
           <option value="1">1 Octave</option>
@@ -140,6 +141,8 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
           <option value="2.5">2.5 Octaves</option>
           <option value="3">3 Octaves</option>
         </select>
+      </div>
+      <div className="setting-item">
         <label>Key</label>
         <select value={scaleSettings.selectedKey} onChange={handleKeyChange}>
           <option value="C">C</option>
@@ -166,6 +169,7 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
           <option value="major_pentatonic">Major Pentatonic</option>
           <option value="minor_pentatonic">Minor Pentatonic</option>
         </select>
+        <div className="vertical-spacer"></div>
         <label>
           <input
             type="checkbox"
@@ -182,6 +186,8 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
           />
           Display Disabled Notes
         </label>
+      </div>
+      <div className="setting-item">
         <label>
           Transpose:{' '}
           {scaleSettings.transpose > 0
