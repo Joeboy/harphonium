@@ -94,6 +94,7 @@ function App() {
         return <KeyboardTab 
           octaves={octaves} 
           onOctavesChange={setOctaves}
+          scaleSettings={scaleSettings}
           onScaleSettingsChange={setScaleSettings}
         />;
 

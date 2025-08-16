@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './KeyboardTab.css';
 
 interface KeyboardTabProps {
   octaves: number;
   onOctavesChange: (octaves: number) => void;
+  scaleSettings: {
+    selectedKey: string;
+    selectedScale: string;
+    showNoteNames: boolean;
+    transpose: number;
+    displayDisabledNotes: boolean;
+  };
   onScaleSettingsChange: (settings: {
     selectedKey: string;
     selectedScale: string;
@@ -16,14 +23,13 @@ interface KeyboardTabProps {
 const KeyboardTab: React.FC<KeyboardTabProps> = ({
   octaves,
   onOctavesChange,
+  scaleSettings,
   onScaleSettingsChange,
 }) => {
-  const [selectedKey, setSelectedKey] = useState('C');
-  const [selectedScale, setSelectedScale] = useState('chromatic');
-  const [showNoteNames, setShowNoteNames] = useState(true);
-  const [transpose, setTranspose] = useState(0);
-  const [displayDisabledNotes, setDisplayDisabledNotes] = useState(true);
-  const [keyboardType, setKeyboardType] = useState<'keys' | 'slide' | 'fretless'>('keys');
+  // Keyboard type is still local state (not in parent)
+  const [keyboardType, setKeyboardType] = React.useState<
+    'keys' | 'slide' | 'fretless'
+  >('keys');
   const handleKeyboardTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setKeyboardType(e.target.value as 'keys' | 'slide' | 'fretless');
   };
@@ -33,100 +39,70 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
   };
 
   const handleKeyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newKey = e.target.value;
-    setSelectedKey(newKey);
     onScaleSettingsChange({
-      selectedKey: newKey,
-      selectedScale,
-      showNoteNames,
-      transpose,
-      displayDisabledNotes,
+      ...scaleSettings,
+      selectedKey: e.target.value,
     });
   };
 
   const handleScaleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newScale = e.target.value;
-    setSelectedScale(newScale);
     onScaleSettingsChange({
-      selectedKey,
-      selectedScale: newScale,
-      showNoteNames,
-      transpose,
-      displayDisabledNotes,
+      ...scaleSettings,
+      selectedScale: e.target.value,
     });
   };
 
-  const handleShowNoteNamesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newShowNoteNames = e.target.checked;
-    setShowNoteNames(newShowNoteNames);
+  const handleShowNoteNamesChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     onScaleSettingsChange({
-      selectedKey,
-      selectedScale,
-      showNoteNames: newShowNoteNames,
-      transpose,
-      displayDisabledNotes,
+      ...scaleSettings,
+      showNoteNames: e.target.checked,
     });
   };
 
-  const handleDisplayDisabledNotesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDisplayDisabledNotes = e.target.checked;
-    setDisplayDisabledNotes(newDisplayDisabledNotes);
+  const handleDisplayDisabledNotesChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     onScaleSettingsChange({
-      selectedKey,
-      selectedScale,
-      showNoteNames,
-      transpose,
-      displayDisabledNotes: newDisplayDisabledNotes,
+      ...scaleSettings,
+      displayDisabledNotes: e.target.checked,
     });
   };
 
   const handleTransposeUp = () => {
-    const newTranspose = transpose === 24 ? -24 : transpose + 1;
-    setTranspose(newTranspose);
+    const newTranspose =
+      scaleSettings.transpose === 24 ? -24 : scaleSettings.transpose + 1;
     onScaleSettingsChange({
-      selectedKey,
-      selectedScale,
-      showNoteNames,
+      ...scaleSettings,
       transpose: newTranspose,
-      displayDisabledNotes,
     });
   };
 
   const handleTransposeDown = () => {
-    const newTranspose = transpose === -24 ? 24 : transpose - 1;
-    setTranspose(newTranspose);
+    const newTranspose =
+      scaleSettings.transpose === -24 ? 24 : scaleSettings.transpose - 1;
     onScaleSettingsChange({
-      selectedKey,
-      selectedScale,
-      showNoteNames,
+      ...scaleSettings,
       transpose: newTranspose,
-      displayDisabledNotes,
     });
   };
 
   const handleOctaveUp = () => {
     // Add 12 semitones (1 octave) - max +24
-    const newTranspose = Math.min(transpose + 12, 24);
-    setTranspose(newTranspose);
+    const newTranspose = Math.min(scaleSettings.transpose + 12, 24);
     onScaleSettingsChange({
-      selectedKey,
-      selectedScale,
-      showNoteNames,
+      ...scaleSettings,
       transpose: newTranspose,
-      displayDisabledNotes,
     });
   };
 
   const handleOctaveDown = () => {
     // Subtract 12 semitones (1 octave) - min -24
-    const newTranspose = Math.max(transpose - 12, -24);
-    setTranspose(newTranspose);
+    const newTranspose = Math.max(scaleSettings.transpose - 12, -24);
     onScaleSettingsChange({
-      selectedKey,
-      selectedScale,
-      showNoteNames,
+      ...scaleSettings,
       transpose: newTranspose,
-      displayDisabledNotes,
     });
   };
 
@@ -180,7 +156,7 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
         </div>
         <div className="setting-item">
           <label>Key</label>
-          <select value={selectedKey} onChange={handleKeyChange}>
+          <select value={scaleSettings.selectedKey} onChange={handleKeyChange}>
             <option value="C">C</option>
             <option value="C#">C#</option>
             <option value="D">D</option>
@@ -197,7 +173,10 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
         </div>
         <div className="setting-item">
           <label>Scale</label>
-          <select value={selectedScale} onChange={handleScaleChange}>
+          <select
+            value={scaleSettings.selectedScale}
+            onChange={handleScaleChange}
+          >
             <option value="chromatic">Chromatic</option>
             <option value="major">Major</option>
             <option value="minor">Minor</option>
@@ -207,9 +186,9 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
         </div>
         <div className="setting-item">
           <label>
-            <input 
-              type="checkbox" 
-              checked={showNoteNames}
+            <input
+              type="checkbox"
+              checked={scaleSettings.showNoteNames}
               onChange={handleShowNoteNamesChange}
             />
             Show Note Names
@@ -217,25 +196,31 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
         </div>
         <div className="setting-item">
           <label>
-            <input 
-              type="checkbox" 
-              checked={displayDisabledNotes}
+            <input
+              type="checkbox"
+              checked={scaleSettings.displayDisabledNotes}
               onChange={handleDisplayDisabledNotesChange}
             />
             Display Disabled Notes
           </label>
         </div>
         <div className="setting-item">
-          <label>Transpose: {transpose > 0 ? `+${transpose}` : transpose} semitones</label>
+          <label>
+            Transpose:{' '}
+            {scaleSettings.transpose > 0
+              ? `+${scaleSettings.transpose}`
+              : scaleSettings.transpose}{' '}
+            semitones
+          </label>
           <div className="transpose-controls">
-            <button 
+            <button
               type="button"
               className="transpose-button"
               onClick={handleTransposeDown}
             >
               ▼ Down
             </button>
-            <button 
+            <button
               type="button"
               className="transpose-button"
               onClick={handleTransposeUp}
@@ -244,14 +229,14 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
             </button>
           </div>
           <div className="transpose-controls" style={{ marginTop: '8px' }}>
-            <button 
+            <button
               type="button"
               className="transpose-button"
               onClick={handleOctaveDown}
             >
               ▼▼ Octave Down
             </button>
-            <button 
+            <button
               type="button"
               className="transpose-button"
               onClick={handleOctaveUp}
