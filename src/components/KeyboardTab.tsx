@@ -132,8 +132,6 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
             Fretless
           </label>
         </div>
-      </div>
-      <div className="setting-item">
         <label>Octaves</label>
         <select value={octaves} onChange={handleOctavesChange}>
           <option value="1">1 Octave</option>
@@ -142,8 +140,6 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
           <option value="2.5">2.5 Octaves</option>
           <option value="3">3 Octaves</option>
         </select>
-      </div>
-      <div className="setting-item">
         <label>Key</label>
         <select value={scaleSettings.selectedKey} onChange={handleKeyChange}>
           <option value="C">C</option>
@@ -159,8 +155,6 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
           <option value="A#">A#</option>
           <option value="B">B</option>
         </select>
-      </div>
-      <div className="setting-item">
         <label>Scale</label>
         <select
           value={scaleSettings.selectedScale}
@@ -172,8 +166,6 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
           <option value="major_pentatonic">Major Pentatonic</option>
           <option value="minor_pentatonic">Minor Pentatonic</option>
         </select>
-      </div>
-      <div className="setting-item">
         <label>
           <input
             type="checkbox"
@@ -182,8 +174,6 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
           />
           Show Note Names
         </label>
-      </div>
-      <div className="setting-item">
         <label>
           <input
             type="checkbox"
@@ -192,8 +182,6 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
           />
           Display Disabled Notes
         </label>
-      </div>
-      <div className="setting-item">
         <label>
           Transpose:{' '}
           {scaleSettings.transpose > 0
