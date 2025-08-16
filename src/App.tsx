@@ -6,12 +6,12 @@ import SynthTab from './components/SynthTab';
 import EffectsTab from './components/EffectsTab';
 import './App.css';
 
-type TabType = 'info' | 'keyboard' | 'synth' | 'effects';
+type TabType = 'synth' | 'keyboard' | 'effects' | 'info';
 
 function App() {
   const [synthState, setSynthState] = useState<string>('');
   const [isAndroid, setIsAndroid] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<TabType>('info');
+  const [activeTab, setActiveTab] = useState<TabType>('keyboard');
   const [octaves, setOctaves] = useState<number>(1.5);
   const [scaleSettings, setScaleSettings] = useState({
     selectedKey: 'C',
@@ -63,33 +63,6 @@ function App() {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'info':
-        return (
-          <div className="tab-content">
-            <h1>Harphonium</h1>
-            <p className="subtitle">Mobile Synthesizer</p>
-
-            <div className="status">
-              <p>{synthState}</p>
-              <small>
-                {isAndroid
-                  ? '⚡ Callback mode audio engine'
-                  : '🔄 Desktop callback mode'}
-              </small>
-            </div>
-
-            <div className="instructions">
-              <h3>How to Play</h3>
-              <ul>
-                <li>Touch and hold keys to play notes</li>
-                <li>Release to stop the sound</li>
-                <li>Scroll the keyboard for more octaves</li>
-                <li>Each key shows note name and frequency</li>
-              </ul>
-            </div>
-          </div>
-        );
-
       case 'keyboard':
         return (
           <KeyboardTab
@@ -105,6 +78,23 @@ function App() {
 
       case 'effects':
         return <EffectsTab isActive={activeTab === 'effects'} />;
+
+      case 'info':
+        return (
+          <div className="tab-content">
+            <h1>Harphonium</h1>
+            <p className="subtitle">Mobile Synthesizer</p>
+
+            <div className="status">
+              <p>{synthState}</p>
+              <small>
+                {isAndroid
+                  ? '⚡ Callback mode audio engine'
+                  : '🔄 Desktop callback mode'}
+              </small>
+            </div>
+          </div>
+        );
     }
   };
 
@@ -113,28 +103,31 @@ function App() {
       <div className="left-pane">
         <div className="tab-bar">
           <button
-            className={`tab ${activeTab === 'info' ? 'active' : ''}`}
-            onClick={() => setActiveTab('info')}
-          >
-            Info
-          </button>
-          <button
             className={`tab ${activeTab === 'keyboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('keyboard')}
           >
             Keyboard
           </button>
+
           <button
             className={`tab ${activeTab === 'synth' ? 'active' : ''}`}
             onClick={() => setActiveTab('synth')}
           >
             Synth
           </button>
+
           <button
             className={`tab ${activeTab === 'effects' ? 'active' : ''}`}
             onClick={() => setActiveTab('effects')}
           >
             Effects
+          </button>
+
+          <button
+            className={`tab ${activeTab === 'info' ? 'active' : ''}`}
+            onClick={() => setActiveTab('info')}
+          >
+            Info
           </button>
         </div>
         <div className="tab-content-container">{renderTabContent()}</div>
