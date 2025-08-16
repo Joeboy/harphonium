@@ -37,7 +37,9 @@ pub fn main() {
             commands::set_delay_feedback,
             commands::get_delay_feedback,
             commands::set_delay_mix,
-            commands::get_delay_mix
+            commands::get_delay_mix,
+            commands::set_filter_cutoff,
+            commands::get_filter_cutoff,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

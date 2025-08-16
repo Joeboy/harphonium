@@ -422,4 +422,31 @@ impl FunDSPSynth {
     pub fn get_delay_mix(&self) -> f32 {
         self.delay_mix_var.value()
     }
+
+    pub fn set_filter_cutoff(&mut self, cutoff: f32) {
+        if !self.enabled {
+            return; // No change needed
+        }
+        self.filter_cutoff_var
+            .set_value(cutoff.clamp(20.0, 20000.0)); // 20 Hz to 20 kHz
+    }
+
+    /// Get filter cutoff frequency
+    pub fn get_filter_cutoff(&self) -> f32 {
+        self.filter_cutoff_var.value()
+    }
+
+    /// Set filter resonance (0.0 to 1.0)
+    pub fn set_filter_resonance(&mut self, resonance: f32) {
+        if !self.enabled {
+            return; // No change needed
+        }
+        self.filter_resonance_var
+            .set_value(resonance.clamp(0.0, 1.0));
+    }
+
+    /// Get filter resonance
+    pub fn get_filter_resonance(&self) -> f32 {
+        self.filter_resonance_var.value()
+    }
 }

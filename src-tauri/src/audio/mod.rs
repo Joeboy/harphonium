@@ -235,6 +235,40 @@ impl AudioEngine {
             0.8 // Default delay mix
         }
     }
+
+    pub fn set_filter_cutoff(&self, cutoff: f32) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.set_filter_cutoff(cutoff);
+            Ok(())
+        } else {
+            Err("Failed to acquire synth lock".to_string())
+        }
+    }
+
+    pub fn get_filter_cutoff(&self) -> f32 {
+        if let Ok(synth) = self.synth.lock() {
+            synth.get_filter_cutoff()
+        } else {
+            1000.0 // Default cutoff
+        }
+    }
+
+    pub fn set_filter_resonance(&self, resonance: f32) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.set_filter_resonance(resonance);
+            Ok(())
+        } else {
+            Err("Failed to acquire synth lock".to_string())
+        }
+    }
+
+    pub fn get_filter_resonance(&self) -> f32 {
+        if let Ok(synth) = self.synth.lock() {
+            synth.get_filter_resonance()
+        } else {
+            0.5 // Default resonance
+        }
+    }
 }
 
 // Global audio engine
@@ -479,5 +513,48 @@ pub fn get_delay_mix() -> f32 {
         engine.get_delay_mix()
     } else {
         0.8 // Default delay mix
+    }
+}
+
+
+pub fn set_filter_cutoff(_cutoff: f32) -> Result<(), String> {
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.set_filter_cutoff(_cutoff)
+    } else {
+        Err("Audio engine not initialized".to_string())
+    }
+}
+
+pub fn get_filter_cutoff() -> f32 {
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.get_filter_cutoff()
+    } else {
+        1000.0 // Default cutoff
+    }
+}
+
+pub fn set_filter_resonance(_resonance: f32) -> Result<(), String> {
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.set_filter_resonance(_resonance)
+    } else {
+        Err("Audio engine not initialized".to_string())
+    }
+}
+
+pub fn get_filter_resonance() -> f32 {
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.get_filter_resonance()
+    } else {
+        0.5 // Default resonance
     }
 }
