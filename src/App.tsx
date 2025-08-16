@@ -89,27 +89,29 @@ function App() {
             </div>
           </div>
         );
-      
+
       case 'keyboard':
-        return <KeyboardTab 
-          octaves={octaves} 
-          onOctavesChange={setOctaves}
-          scaleSettings={scaleSettings}
-          onScaleSettingsChange={setScaleSettings}
-        />;
+        return (
+          <KeyboardTab
+            octaves={octaves}
+            onOctavesChange={setOctaves}
+            scaleSettings={scaleSettings}
+            onScaleSettingsChange={setScaleSettings}
+          />
+        );
 
       case 'synth':
         return <SynthTab />;
 
       case 'effects':
-        return <EffectsTab />;
+        return <EffectsTab isActive={activeTab === 'effects'} />;
 
       case 'about':
         return (
           <div className="tab-content">
             <h2>About Harphonium</h2>
             <p>A mobile-optimized synthesizer built with Tauri and React.</p>
-            
+
             <div className="about-section">
               <h3>Features</h3>
               <ul>
@@ -170,16 +172,14 @@ function App() {
             About
           </button>
         </div>
-        <div className="tab-content-container">
-          {renderTabContent()}
-        </div>
+        <div className="tab-content-container">{renderTabContent()}</div>
       </div>
 
       <div className="right-pane">
-        <Keyboard 
-          onNoteStart={playNote} 
-          onNoteStop={stopNote} 
-          octaves={octaves} 
+        <Keyboard
+          onNoteStart={playNote}
+          onNoteStop={stopNote}
+          octaves={octaves}
           selectedKey={scaleSettings.selectedKey}
           selectedScale={scaleSettings.selectedScale}
           showNoteNames={scaleSettings.showNoteNames}

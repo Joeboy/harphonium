@@ -94,7 +94,7 @@ impl FunDSPSynth {
         let master_volume_var = shared(0.7); // Default to 70% volume
 
         // ADSR envelope parameters with reasonable defaults
-        let attack_var = shared(0.1); // 20ms attack
+        let attack_var = shared(0.05); // 50ms attack
         let decay_var = shared(0.2); // 200ms decay
         let sustain_var = shared(0.6); // 60% sustain level
         let release_var = shared(0.3); // 300ms release
@@ -108,7 +108,7 @@ impl FunDSPSynth {
 
         let delay_time_var = shared(0.3);
         let delay_feedback_var = shared(0.4);
-        let delay_mix_var = shared(0.3);
+        let delay_mix_var = shared(0.2);
 
         let mut net = Net::new(0, 1);
 

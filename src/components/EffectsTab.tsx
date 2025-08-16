@@ -1,20 +1,37 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import './EffectsTab.css';
 import throttle from 'lodash.throttle';
 
 interface EffectsTabProps {
-  // Add props for effects parameters as needed
+  isActive: boolean;
 }
 
-const EffectsTab: React.FC<EffectsTabProps> = () => {
+const EffectsTab: React.FC<EffectsTabProps> = ({ isActive }) => {
+  // Fetch delay state from backend when tab becomes active
+  useEffect(() => {
+    if (isActive) {
+      // Fetch delay time
+      invoke('get_delay_time')
+        .then((value) => setDelayTime(Number(value)))
+        .catch((e) => console.error('Failed to get delay time:', e));
+      // Fetch delay wet level
+      invoke('get_delay_mix')
+        .then((value) => setDelayWetLevel(Number(value)))
+        .catch((e) => console.error('Failed to get delay mix:', e));
+      // Fetch delay feedback
+      invoke('get_delay_feedback')
+        .then((value) => setDelayFeedback(Number(value)))
+        .catch((e) => console.error('Failed to get delay feedback:', e));
+    }
+    // Optionally, do nothing when inactive
+  }, [isActive]);
   // Reverb controls
   const [reverbEnabled, setReverbEnabled] = useState(false);
   const [reverbRoomSize, setReverbRoomSize] = useState(0.5);
   const [reverbDamping, setReverbDamping] = useState(0.3);
   const [reverbWetLevel, setReverbWetLevel] = useState(0.3);
   const [reverbDryLevel, setReverbDryLevel] = useState(0.7);
-
 
   // Delay controls
   const [delayTime, setDelayTime] = useState(0.25);
@@ -57,7 +74,6 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
       }, SLIDER_THROTTLE_MS),
     []
   );
-
 
   const handleDelayTimeChange = (value: number) => {
     setDelayTime(value);
@@ -203,7 +219,9 @@ const EffectsTab: React.FC<EffectsTabProps> = () => {
               max="0.95"
               step="0.01"
               value={delayFeedback}
-              onChange={(e) => handleDelayFeedbackChange(parseFloat(e.target.value))}
+              onChange={(e) =>
+                handleDelayFeedbackChange(parseFloat(e.target.value))
+              }
             />
           </div>
           <div className="control-group">
