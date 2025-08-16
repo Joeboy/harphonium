@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import './Keyboard.css';
 
 interface KeyboardProps {
@@ -112,41 +112,68 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
 
 
   // Calculate note pitch from horizontal position
+
+  // Track the currently playing note index
+  const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
+  const [isPointerDown, setIsPointerDown] = useState(false);
+
+  // Helper to get note index from event
+  const getNoteIndexFromEvent = (e: React.TouchEvent | React.MouseEvent, playableKeys: typeof keys) => {
+    const container = containerRef.current;
+    if (!container) return null;
+    let clientY: number;
+    if ('touches' in e && e.touches.length > 0) {
+      clientY = e.touches[0].clientY;
+    } else if ('clientY' in e) {
+      clientY = e.clientY;
+    } else {
+      clientY = 0;
+    }
+    const rect = container.getBoundingClientRect();
+    const y = clientY - rect.top;
+    const height = rect.height;
+    const keyIndex = Math.floor((y / height) * playableKeys.length);
+    return Math.max(0, Math.min(playableKeys.length - 1, keyIndex));
+  };
+
   const handleKeyboardStart = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    const container = containerRef.current;
-    if (container) {
-      let clientY: number;
-      if ('touches' in e && e.touches.length > 0) {
-        clientY = e.touches[0].clientY;
-      } else if ('clientY' in e) {
-        clientY = e.clientY;
-      } else {
-        clientY = 0;
-      }
-      const rect = container.getBoundingClientRect();
-      const y = clientY - rect.top;
-      const height = rect.height;
-      // Use filteredKeys for mapping if displayDisabledNotes is false, otherwise use all keys
-      const playableKeys = displayDisabledNotes ? keys : filteredKeys;
-      const keyIndex = Math.floor((y / height) * playableKeys.length);
-      const clampedIndex = Math.max(0, Math.min(playableKeys.length - 1, keyIndex));
-      const key = playableKeys[clampedIndex];
-      // Only play if the note is in the scale (should always be true for filteredKeys)
+    setIsPointerDown(true);
+    const playableKeys = displayDisabledNotes ? keys : filteredKeys;
+    const noteIndex = getNoteIndexFromEvent(e, playableKeys);
+    if (noteIndex !== null) {
+      const key = playableKeys[noteIndex];
       const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
       if (inScale) {
         setTimeout(() => onNoteStart(key.frequency), 0);
+        setActiveNoteIndex(noteIndex);
       }
-    } else {
-      setTimeout(() => onNoteStart(440), 0);
+    }
+  };
+
+  const handleKeyboardMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isPointerDown) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const playableKeys = displayDisabledNotes ? keys : filteredKeys;
+    const noteIndex = getNoteIndexFromEvent(e, playableKeys);
+    if (noteIndex !== null && noteIndex !== activeNoteIndex) {
+      const key = playableKeys[noteIndex];
+      const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
+      if (inScale) {
+        setTimeout(() => onNoteStop(), 0);
+        setTimeout(() => onNoteStart(key.frequency), 0);
+        setActiveNoteIndex(noteIndex);
+      }
     }
   };
 
   const handleKeyboardEnd = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsPointerDown(false);
+    setActiveNoteIndex(null);
     setTimeout(() => onNoteStop(), 0);
   };
 
@@ -156,9 +183,11 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
       ref={containerRef}
       onTouchStart={handleKeyboardStart}
       onTouchEnd={handleKeyboardEnd}
+      onTouchMove={handleKeyboardMove}
       onMouseDown={handleKeyboardStart}
       onMouseUp={handleKeyboardEnd}
       onMouseLeave={handleKeyboardEnd}
+      onMouseMove={handleKeyboardMove}
       style={{ width: '100%', height: '100%' }}
     >
       <div className="keyboard" style={{ width: '100%', height: '100%' }}>
