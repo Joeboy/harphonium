@@ -292,7 +292,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
             type="range"
             id="cutoff"
             min="100"
-            max="8000"
+            max="5000"
             step="10"
             value={filterCutoff}
             onChange={(e) => handleFilterCutoffChange(parseFloat(e.target.value))}
@@ -306,7 +306,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
             type="range"
             id="resonance"
             min="0"
-            max="1"
+            max="2"
             step="0.01"
             value={filterResonance}
             onChange={(e) => handleFilterResonanceChange(parseFloat(e.target.value))}
