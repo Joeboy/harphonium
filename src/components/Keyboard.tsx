@@ -21,40 +21,7 @@ interface KeyData {
 const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale, showNoteNames, transpose, displayDisabledNotes }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Check if a note is in the selected scale
-  const isNoteInScale = (note: string, key: string, scale: string): boolean => {
-    if (scale === 'chromatic') return true;
-    
-    // Remove octave number from note (e.g., "C4" -> "C")
-    const noteWithoutOctave = note.replace(/\d+$/, '');
-    
-    // Define scale intervals (semitones from root)
-    const scaleIntervals: { [key: string]: number[] } = {
-      'major': [0, 2, 4, 5, 7, 9, 11],
-      'minor': [0, 2, 3, 5, 7, 8, 10],
-      'major_pentatonic': [0, 2, 4, 7, 9],
-      'minor_pentatonic': [0, 3, 5, 7, 10]
-    };
-    
-    // Map note names to semitones
-    const noteToSemitone: { [key: string]: number } = {
-      'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
-      'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
-    };
-    
-    const intervals = scaleIntervals[scale];
-    if (!intervals) return true; // Fallback to allow all notes
-    
-    const rootSemitone = noteToSemitone[key];
-    const noteSemitone = noteToSemitone[noteWithoutOctave];
-    
-    if (rootSemitone === undefined || noteSemitone === undefined) return true;
-    
-    // Calculate the interval from the key to this note
-    const interval = (noteSemitone - rootSemitone + 12) % 12;
-    
-    return intervals.includes(interval);
-  };
+
 
   // Generate piano keys dynamically based on octaves setting
   const generateKeys = (numOctaves: number): KeyData[] => {
@@ -108,56 +75,46 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
 
   const keys = generateKeys(octaves);
 
-  // Filter keys based on displayDisabledNotes setting
-  const filteredKeys = displayDisabledNotes 
-    ? keys 
-    : keys.filter((key) => isNoteInScale(key.note, selectedKey, selectedScale));
 
-  // Optimized touch handlers with minimal latency
-  const createTouchHandlers = (freq: number, enabled: boolean) => {
-    const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
-      if (!enabled) return; // Don't play if note is disabled
-      
-      e.preventDefault(); // Prevent default touch behaviors
-      e.stopPropagation(); // Stop event bubbling
 
-      // Use setTimeout with 0 delay to break out of React's batching for faster execution
-      setTimeout(() => onNoteStart(freq), 0);
-    };
 
-    const handleEnd = (e: React.TouchEvent | React.MouseEvent) => {
-      if (!enabled) return; // Don't process if note is disabled
-      
-      e.preventDefault();
-      e.stopPropagation();
-      setTimeout(() => onNoteStop(), 0);
-    };
 
-    return { handleStart, handleEnd };
+  // Single handler for the whole keyboard
+  const handleKeyboardStart = (e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setTimeout(() => onNoteStart(440), 0); // For now, always use 440 Hz
+  };
+
+  const handleKeyboardEnd = (e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setTimeout(() => onNoteStop(), 0);
   };
 
   return (
-    <div className="keyboard-container" ref={containerRef}>
-      <div className="keyboard">
-        {filteredKeys.map((key) => {
-          const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
-          const { handleStart, handleEnd } = createTouchHandlers(key.frequency, inScale);
+    <div
+      className="keyboard-container"
+      ref={containerRef}
+      onTouchStart={handleKeyboardStart}
+      onTouchEnd={handleKeyboardEnd}
+      onMouseDown={handleKeyboardStart}
+      onMouseUp={handleKeyboardEnd}
+      onMouseLeave={handleKeyboardEnd}
+      style={{ width: '100%', height: '100%' }}
+    >
+      <div className="keyboard" style={{ width: '100%', height: '100%' }}>
+        {keys.map((key) => {
           const dynamicStyle = {
-            flex: key.isBlack ? '0.8' : '1', // Black keys take 80% of white key height
-            minHeight: key.isBlack ? '12px' : '15px', // Minimum heights
+            flex: key.isBlack ? '0.8' : '1',
+            minHeight: key.isBlack ? '12px' : '15px',
           };
-          
           return (
             <button
               key={key.note}
-              className={`key ${key.isBlack ? 'black-key' : 'white-key'} ${!inScale ? 'disabled' : ''}`}
-              style={dynamicStyle}
-              onTouchStart={handleStart}
-              onTouchEnd={handleEnd}
-              onMouseDown={handleStart}
-              onMouseUp={handleEnd}
-              onMouseLeave={handleEnd}
-              disabled={!inScale}
+              className={`key ${key.isBlack ? 'black-key' : 'white-key'}`}
+              style={{ ...dynamicStyle, pointerEvents: 'none' }}
+              tabIndex={-1}
             >
               {showNoteNames && <div className="key-note">{key.note}</div>}
             </button>
