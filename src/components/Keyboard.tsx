@@ -132,8 +132,12 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
       // Always use the full keys array for mapping
       const keyIndex = Math.floor((y / height) * keys.length);
       const clampedIndex = Math.max(0, Math.min(keys.length - 1, keyIndex));
-      const freq = keys[clampedIndex].frequency;
-      setTimeout(() => onNoteStart(freq), 0);
+      const key = keys[clampedIndex];
+      // Only play if the note is in the scale
+      const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
+      if (inScale) {
+        setTimeout(() => onNoteStart(key.frequency), 0);
+      }
     } else {
       setTimeout(() => onNoteStart(440), 0);
     }
