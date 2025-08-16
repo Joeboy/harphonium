@@ -125,6 +125,7 @@ pub async fn get_delay_mix() -> f32 {
 
 #[tauri::command]
 pub async fn set_filter_cutoff(cutoff: f32) {
+    println!("Setting filter cutoff to {}", cutoff);
     if let Err(e) = audio::set_filter_cutoff(cutoff) {
         eprintln!("Error setting filter cutoff: {}", e);
     }
@@ -133,4 +134,16 @@ pub async fn set_filter_cutoff(cutoff: f32) {
 #[tauri::command]
 pub async fn get_filter_cutoff() -> f32 {
     audio::get_filter_cutoff()
+}
+
+#[tauri::command]
+pub async fn set_filter_resonance(resonance: f32) {
+    if let Err(e) = audio::set_filter_resonance(resonance) {
+        eprintln!("Error setting filter resonance: {}", e);
+    }
+}
+
+#[tauri::command]
+pub async fn get_filter_resonance() -> f32 {
+    audio::get_filter_resonance()
 }

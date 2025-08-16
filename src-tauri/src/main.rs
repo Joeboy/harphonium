@@ -37,6 +37,8 @@ fn main() {
             commands::get_delay_mix,
             commands::set_filter_cutoff,
             commands::get_filter_cutoff,
+            commands::set_filter_resonance,
+            commands::get_filter_resonance,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

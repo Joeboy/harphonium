@@ -47,6 +47,12 @@ const SynthTab: React.FC<SynthTabProps> = () => {
 
         const release: number = await invoke('get_release');
         setReleaseTime(release);
+
+        // Load filter values
+        const cutoff: number = await invoke('get_filter_cutoff');
+        setFilterCutoff(cutoff);
+        const resonance: number = await invoke('get_filter_resonance');
+        setFilterResonance(resonance);
       } catch (error) {
         console.error('Failed to load initial values:', error);
       }
@@ -152,6 +158,41 @@ const SynthTab: React.FC<SynthTabProps> = () => {
     throttledSetRelease(release);
   };
 
+  // Throttled filter handlers
+  const throttledSetFilterCutoff = useMemo(
+    () =>
+      throttle(async (cutoff: number) => {
+        try {
+          await invoke('set_filter_cutoff', { cutoff });
+        } catch (error) {
+          console.error('Failed to set filter cutoff:', error);
+        }
+      }, SLIDER_THROTTLE_MS),
+    []
+  );
+
+  const throttledSetFilterResonance = useMemo(
+    () =>
+      throttle(async (resonance: number) => {
+        try {
+          await invoke('set_filter_resonance', { resonance });
+        } catch (error) {
+          console.error('Failed to set filter resonance:', error);
+        }
+      }, SLIDER_THROTTLE_MS),
+    []
+  );
+
+  const handleFilterCutoffChange = (cutoff: number) => {
+    setFilterCutoff(cutoff);
+    throttledSetFilterCutoff(cutoff);
+  };
+
+  const handleFilterResonanceChange = (resonance: number) => {
+    setFilterResonance(resonance);
+    throttledSetFilterResonance(resonance);
+  };
+
   return (
     <div className="synth-tab">
       <div className="synth-section">
@@ -244,7 +285,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
       </div>
 
       <div className="synth-section">
-        <h3>Filter (TODO)</h3>
+        <h3>Filter</h3>
         <div className="control-group">
           <label htmlFor="cutoff">Cutoff: {filterCutoff.toFixed(0)} Hz</label>
           <input
@@ -254,7 +295,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
             max="8000"
             step="10"
             value={filterCutoff}
-            onChange={(e) => setFilterCutoff(parseFloat(e.target.value))}
+            onChange={(e) => handleFilterCutoffChange(parseFloat(e.target.value))}
           />
         </div>
         <div className="control-group">
@@ -268,7 +309,7 @@ const SynthTab: React.FC<SynthTabProps> = () => {
             max="1"
             step="0.01"
             value={filterResonance}
-            onChange={(e) => setFilterResonance(parseFloat(e.target.value))}
+            onChange={(e) => handleFilterResonanceChange(parseFloat(e.target.value))}
           />
         </div>
       </div>
