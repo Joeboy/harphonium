@@ -129,11 +129,12 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
       const rect = container.getBoundingClientRect();
       const y = clientY - rect.top;
       const height = rect.height;
-      // Always use the full keys array for mapping
-      const keyIndex = Math.floor((y / height) * keys.length);
-      const clampedIndex = Math.max(0, Math.min(keys.length - 1, keyIndex));
-      const key = keys[clampedIndex];
-      // Only play if the note is in the scale
+      // Use filteredKeys for mapping if displayDisabledNotes is false, otherwise use all keys
+      const playableKeys = displayDisabledNotes ? keys : filteredKeys;
+      const keyIndex = Math.floor((y / height) * playableKeys.length);
+      const clampedIndex = Math.max(0, Math.min(playableKeys.length - 1, keyIndex));
+      const key = playableKeys[clampedIndex];
+      // Only play if the note is in the scale (should always be true for filteredKeys)
       const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
       if (inScale) {
         setTimeout(() => onNoteStart(key.frequency), 0);
