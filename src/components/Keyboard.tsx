@@ -143,16 +143,25 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
     noteIndex = Math.max(0, Math.min(playableKeys.length - 1, noteIndex));
 
     if (keyboardType === 'fretless') {
-      // Continuous pitch: interpolate between keys
-      const exactIndex = pos * (playableKeys.length - 1);
-      const lowerIndex = Math.floor(exactIndex);
-      const upperIndex = Math.ceil(exactIndex);
-      const t = exactIndex - lowerIndex;
+      // Center of first key is at (0.5 / n), last key at (n-0.5)/n
+      // Allow pitch to go slightly below/above the lowest/highest note at the very bottom/top
+      const n = playableKeys.length;
+      // Map pos in [0,1] to [-0.5, n-0.5] (so 0 is center of first key, 1 is center of last key)
+      const minIdx = -0.5;
+      const maxIdx = n - 0.5;
+      const semitoneIndex = minIdx + (maxIdx - minIdx) * pos;
+      // Clamp for noteIndex
+      const lowerIndex = Math.floor(Math.max(0, Math.min(n - 2, semitoneIndex)));
+      const upperIndex = lowerIndex + 1;
+      const t = semitoneIndex - lowerIndex;
+      // Get frequencies for lower and upper keys
       const lowerFreq = playableKeys[lowerIndex].frequency;
       const upperFreq = playableKeys[upperIndex]?.frequency ?? lowerFreq;
-      // Center of each key is "in tune"
-      // Interpolate linearly between lower and upper frequencies
-      const frequency = lowerFreq + (upperFreq - lowerFreq) * t;
+      // Interpolate in log2 space for perceptual accuracy
+      const lowerLog = Math.log2(lowerFreq);
+      const upperLog = Math.log2(upperFreq);
+      const interpLog = lowerLog + (upperLog - lowerLog) * t;
+      const frequency = Math.pow(2, interpLog);
       return { noteIndex: lowerIndex, frequency };
     } else {
       // Discrete keys
