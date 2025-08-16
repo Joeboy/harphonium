@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import './EffectsTab.css';
 import throttle from 'lodash.throttle';
 
 interface EffectsTabProps {
@@ -85,59 +84,47 @@ const EffectsTab: React.FC<EffectsTabProps> = ({ isActive }) => {
   };
 
   return (
-    <div className="effects-tab">
-      <div className="effect-section">
-        <div className="effect-header">
-          <h3>Delay</h3>
-        </div>
-        <div className="effect-controls">
-          <div className="control-group">
-            <label htmlFor="delay-time">
-              Time: {(delayTime * 1000).toFixed(0)}ms
-            </label>
-            <input
-              type="range"
-              id="delay-time"
-              min="0.01"
-              max="2"
-              step="0.01"
-              value={delayTime}
-              onChange={(e) =>
-                handleDelayTimeChange(parseFloat(e.target.value))
-              }
-            />
-          </div>
-          <div className="control-group">
-            <label htmlFor="delay-feedback">
-              Feedback: {(delayFeedback * 100).toFixed(0)}%
-            </label>
-            <input
-              type="range"
-              id="delay-feedback"
-              min="0"
-              max="0.95"
-              step="0.01"
-              value={delayFeedback}
-              onChange={(e) =>
-                handleDelayFeedbackChange(parseFloat(e.target.value))
-              }
-            />
-          </div>
-          <div className="control-group">
-            <label htmlFor="delay-wet">
-              Mix: {(delayWetLevel * 100).toFixed(0)}%
-            </label>
-            <input
-              type="range"
-              id="delay-wet"
-              min="0"
-              max="1"
-              step="0.01"
-              value={delayWetLevel}
-              onChange={(e) => handleDelayMixChange(parseFloat(e.target.value))}
-            />
-          </div>
-        </div>
+    <div className="tab-content">
+      <div className="setting-item">
+        <h3>Delay</h3>
+        <label htmlFor="delay-time">
+          Time: {(delayTime * 1000).toFixed(0)}ms
+        </label>
+        <input
+          type="range"
+          id="delay-time"
+          min="0.01"
+          max="2"
+          step="0.01"
+          value={delayTime}
+          onChange={(e) => handleDelayTimeChange(parseFloat(e.target.value))}
+        />
+        <label htmlFor="delay-feedback">
+          Feedback: {(delayFeedback * 100).toFixed(0)}%
+        </label>
+        <input
+          type="range"
+          id="delay-feedback"
+          min="0"
+          max="0.95"
+          step="0.01"
+          value={delayFeedback}
+          onChange={(e) =>
+            handleDelayFeedbackChange(parseFloat(e.target.value))
+          }
+        />
+        <label htmlFor="delay-wet">
+          Mix: {(delayWetLevel * 100).toFixed(0)}%
+        </label>
+        <input
+          type="range"
+          id="delay-wet"
+          min="0"
+          max="1"
+          step="0.01"
+          value={delayWetLevel}
+          onChange={(e) => handleDelayMixChange(parseFloat(e.target.value))}
+        />
       </div>
     </div>
   );

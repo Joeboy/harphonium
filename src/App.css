@@ -24,7 +24,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -58,7 +59,8 @@ html, body {
   flex-direction: column;
   background: #1a1a1a;
   border-right: 2px solid #333;
-  min-width: 0; /* Allow shrinking */
+  min-width: 0;
+  /* Allow shrinking */
 }
 
 /* Right pane - keyboard - always fixed 120px width */
@@ -66,10 +68,12 @@ html, body {
   width: 120px;
   min-width: 120px;
   max-width: 120px;
-  height: 100vh; /* Ensure full viewport height */
+  height: 100vh;
+  /* Ensure full viewport height */
   display: flex;
   background: #2a2a2a;
-  flex-shrink: 0; /* Never shrink */
+  flex-shrink: 0;
+  /* Never shrink */
 }
 
 /* Tab bar */
@@ -180,14 +184,16 @@ h3 {
   margin-top: 30px;
 }
 
-.instructions ul, .about-section ul {
+.instructions ul,
+.about-section ul {
   list-style-position: inside;
   margin-left: 0;
   color: #ccc;
   line-height: 1.6;
 }
 
-.instructions li, .about-section li {
+.instructions li,
+.about-section li {
   margin-bottom: 8px;
 }
 
@@ -202,6 +208,9 @@ h3 {
 
 .setting-item {
   margin-bottom: 20px;
+  border-radius: 10px;
+  border: 1px solid #444;
+  padding: 8px;
 }
 
 .setting-item label {
@@ -261,11 +270,11 @@ h3 {
   .tab-content {
     padding: 20px;
   }
-  
+
   h1 {
     font-size: 2rem;
   }
-  
+
   h2 {
     font-size: 1.5rem;
   }
@@ -276,11 +285,11 @@ h3 {
     padding: 12px 15px;
     font-size: 0.9rem;
   }
-  
+
   .tab-content {
     padding: 15px;
   }
-  
+
   h1 {
     font-size: 1.8rem;
   }

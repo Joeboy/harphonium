@@ -3,7 +3,6 @@ import throttle from 'lodash.throttle';
 
 const SLIDER_THROTTLE_MS = 100;
 import { invoke } from '@tauri-apps/api/core';
-import './SynthTab.css';
 
 interface SynthTabProps {
   // Add props for synth parameters as needed
@@ -20,7 +19,10 @@ const SynthTab: React.FC<SynthTabProps> = () => {
   // We'll store the knob value (0..1) for log scale
   const [filterCutoffKnob, setFilterCutoffKnob] = useState(0.5);
   // Calculate the actual cutoff frequency from the knob
-  const filterCutoff = useMemo(() => 40.0 * Math.pow(300.0, filterCutoffKnob), [filterCutoffKnob]);
+  const filterCutoff = useMemo(
+    () => 40.0 * Math.pow(300.0, filterCutoffKnob),
+    [filterCutoffKnob]
+  );
   const [filterResonance, setFilterResonance] = useState(0.5);
   const [masterVolume, setMasterVolume] = useState(70);
 
@@ -202,129 +204,121 @@ const SynthTab: React.FC<SynthTabProps> = () => {
   };
 
   return (
-    <div className="synth-tab">
-      <div className="synth-section">
-        <div className="control-group">
-          <label htmlFor="master-volume">Master Volume: {masterVolume}%</label>
-          <input
-            type="range"
-            id="master-volume"
-            min="0"
-            max="100"
-            step="1"
-            value={masterVolume}
-            onChange={(e) => handleMasterVolumeChange(parseInt(e.target.value))}
-          />
-        </div>
+    <div className="tab-content">
+      <div className="setting-item">
+        <label htmlFor="master-volume">Master Volume: {masterVolume}%</label>
+        <input
+          type="range"
+          id="master-volume"
+          min="0"
+          max="100"
+          step="1"
+          value={masterVolume}
+          onChange={(e) => handleMasterVolumeChange(parseInt(e.target.value))}
+        />
       </div>
-
-      <div className="synth-section">
-        <div className="control-group">
-          <label htmlFor="oscillator-type">Waveform:</label>
-          <select
-            id="oscillator-type"
-            value={oscillatorType}
-            onChange={(e) =>
-              handleWaveformChange(
-                e.target.value as 'sine' | 'square' | 'sawtooth' | 'triangle'
-              )
-            }
-          >
-            <option value="sine">Sine</option>
-            <option value="square">Square</option>
-            <option value="sawtooth">Sawtooth</option>
-            <option value="triangle">Triangle</option>
-          </select>
-        </div>
+      <div className="setting-item">
+        <label htmlFor="oscillator-type">Waveform:</label>
+        <select
+          id="oscillator-type"
+          value={oscillatorType}
+          onChange={(e) =>
+            handleWaveformChange(
+              e.target.value as 'sine' | 'square' | 'sawtooth' | 'triangle'
+            )
+          }
+        >
+          <option value="sine">Sine</option>
+          <option value="square">Square</option>
+          <option value="sawtooth">Sawtooth</option>
+          <option value="triangle">Triangle</option>
+        </select>
       </div>
-
-      <div className="synth-section">
+      <div className="setting-item">
         <h3>ADSR</h3>
-        <div className="control-group">
-          <label htmlFor="attack">Attack: {attackTime.toFixed(2)}s</label>
-          <input
-            type="range"
-            id="attack"
-            min="0.01"
-            max="2"
-            step="0.01"
-            value={attackTime}
-            onChange={(e) => handleAttackChange(parseFloat(e.target.value))}
-          />
-        </div>
-        <div className="control-group">
-          <label htmlFor="decay">Decay: {decayTime.toFixed(2)}s</label>
-          <input
-            type="range"
-            id="decay"
-            min="0.01"
-            max="2"
-            step="0.01"
-            value={decayTime}
-            onChange={(e) => handleDecayChange(parseFloat(e.target.value))}
-          />
-        </div>
-        <div className="control-group">
-          <label htmlFor="sustain">
-            Sustain: {(sustainLevel * 100).toFixed(0)}%
-          </label>
-          <input
-            type="range"
-            id="sustain"
-            min="0"
-            max="1"
-            step="0.01"
-            value={sustainLevel}
-            onChange={(e) => handleSustainChange(parseFloat(e.target.value))}
-          />
-        </div>
-        <div className="control-group">
-          <label htmlFor="release">Release: {releaseTime.toFixed(2)}s</label>
-          <input
-            type="range"
-            id="release"
-            min="0.01"
-            max="3"
-            step="0.01"
-            value={releaseTime}
-            onChange={(e) => handleReleaseChange(parseFloat(e.target.value))}
-          />
-        </div>
-      </div>
 
-      <div className="synth-section">
+        <label htmlFor="attack">Attack: {attackTime.toFixed(2)}s</label>
+        <input
+          type="range"
+          id="attack"
+          min="0.01"
+          max="2"
+          step="0.01"
+          value={attackTime}
+          onChange={(e) => handleAttackChange(parseFloat(e.target.value))}
+        />
+        <label htmlFor="decay">Decay: {decayTime.toFixed(2)}s</label>
+        <input
+          type="range"
+          id="decay"
+          min="0.01"
+          max="2"
+          step="0.01"
+          value={decayTime}
+          onChange={(e) => handleDecayChange(parseFloat(e.target.value))}
+        />
+        <label htmlFor="sustain">
+          Sustain: {(sustainLevel * 100).toFixed(0)}%
+        </label>
+        <input
+          type="range"
+          id="sustain"
+          min="0"
+          max="1"
+          step="0.01"
+          value={sustainLevel}
+          onChange={(e) => handleSustainChange(parseFloat(e.target.value))}
+        />
+        <label htmlFor="release">Release: {releaseTime.toFixed(2)}s</label>
+        <input
+          type="range"
+          id="release"
+          min="0.01"
+          max="3"
+          step="0.01"
+          value={releaseTime}
+          onChange={(e) => handleReleaseChange(parseFloat(e.target.value))}
+        />
+      </div>
+      <div className="setting-item">
         <h3>Filter</h3>
-        <div className="control-group">
-          <label htmlFor="cutoff">Cutoff: {filterCutoff.toFixed(0)} Hz</label>
-          <input
-            type="range"
-            id="cutoff"
-            min={0}
-            max={1}
-            step={0.001}
-            value={filterCutoffKnob}
-            onChange={(e) => handleFilterCutoffKnobChange(parseFloat(e.target.value))}
-            style={{ width: '100%' }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8em' }}>
-            <span>0 Hz</span>
-            <span>12kHz</span>
-          </div>
+        <label htmlFor="cutoff">Cutoff: {filterCutoff.toFixed(0)} Hz</label>
+        <input
+          type="range"
+          id="cutoff"
+          min={0}
+          max={1}
+          step={0.001}
+          value={filterCutoffKnob}
+          onChange={(e) =>
+            handleFilterCutoffKnobChange(parseFloat(e.target.value))
+          }
+          style={{ width: '100%' }}
+        />
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: '0.8em',
+          }}
+        >
+          <span>0 Hz</span>
+          <span>12kHz</span>
         </div>
-        <div className="control-group">
-          <label htmlFor="resonance">
-            Resonance: {(filterResonance * 100).toFixed(0)}%
-          </label>
-          <input
-            type="range"
-            id="resonance"
-            min="0"
-            max="2"
-            step="0.01"
-            value={filterResonance}
-            onChange={(e) => handleFilterResonanceChange(parseFloat(e.target.value))}
-          />
-        </div>
+        <label htmlFor="resonance">
+          Resonance: {(filterResonance * 100).toFixed(0)}%
+        </label>
+        <input
+          type="range"
+          id="resonance"
+          min="0"
+          max="2"
+          step="0.01"
+          value={filterResonance}
+          onChange={(e) =>
+            handleFilterResonanceChange(parseFloat(e.target.value))
+          }
+        />
       </div>
     </div>
   );
