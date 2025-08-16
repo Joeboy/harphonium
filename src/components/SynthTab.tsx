@@ -17,7 +17,10 @@ const SynthTab: React.FC<SynthTabProps> = () => {
   const [decayTime, setDecayTime] = useState(0.2);
   const [sustainLevel, setSustainLevel] = useState(0.7);
   const [releaseTime, setReleaseTime] = useState(0.3);
-  const [filterCutoff, setFilterCutoff] = useState(1000);
+  // We'll store the knob value (0..1) for log scale
+  const [filterCutoffKnob, setFilterCutoffKnob] = useState(0.5);
+  // Calculate the actual cutoff frequency from the knob
+  const filterCutoff = useMemo(() => 40.0 * Math.pow(300.0, filterCutoffKnob), [filterCutoffKnob]);
   const [filterResonance, setFilterResonance] = useState(0.5);
   const [masterVolume, setMasterVolume] = useState(70);
 
@@ -50,7 +53,10 @@ const SynthTab: React.FC<SynthTabProps> = () => {
 
         // Load filter values
         const cutoff: number = await invoke('get_filter_cutoff');
-        setFilterCutoff(cutoff);
+        // Convert cutoff to knob value (inverse of 40 * 300^knob)
+        let knob = Math.log(cutoff / 40.0) / Math.log(300.0);
+        knob = Math.max(0, Math.min(1, knob));
+        setFilterCutoffKnob(knob);
         const resonance: number = await invoke('get_filter_resonance');
         setFilterResonance(resonance);
       } catch (error) {
@@ -183,8 +189,10 @@ const SynthTab: React.FC<SynthTabProps> = () => {
     []
   );
 
-  const handleFilterCutoffChange = (cutoff: number) => {
-    setFilterCutoff(cutoff);
+  // When the slider moves, update the knob and send the mapped cutoff
+  const handleFilterCutoffKnobChange = (knob: number) => {
+    setFilterCutoffKnob(knob);
+    const cutoff = 40.0 * Math.pow(300.0, knob);
     throttledSetFilterCutoff(cutoff);
   };
 
@@ -291,12 +299,17 @@ const SynthTab: React.FC<SynthTabProps> = () => {
           <input
             type="range"
             id="cutoff"
-            min="100"
-            max="5000"
-            step="10"
-            value={filterCutoff}
-            onChange={(e) => handleFilterCutoffChange(parseFloat(e.target.value))}
+            min={0}
+            max={1}
+            step={0.001}
+            value={filterCutoffKnob}
+            onChange={(e) => handleFilterCutoffKnobChange(parseFloat(e.target.value))}
+            style={{ width: '100%' }}
           />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8em' }}>
+            <span>0 Hz</span>
+            <span>12kHz</span>
+          </div>
         </div>
         <div className="control-group">
           <label htmlFor="resonance">
