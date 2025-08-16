@@ -6,7 +6,7 @@ import SynthTab from './components/SynthTab';
 import EffectsTab from './components/EffectsTab';
 import './App.css';
 
-type TabType = 'info' | 'keyboard' | 'synth' | 'effects' | 'about';
+type TabType = 'info' | 'keyboard' | 'synth' | 'effects';
 
 function App() {
   const [synthState, setSynthState] = useState<string>('');
@@ -105,35 +105,6 @@ function App() {
 
       case 'effects':
         return <EffectsTab isActive={activeTab === 'effects'} />;
-
-      case 'about':
-        return (
-          <div className="tab-content">
-            <h2>About Harphonium</h2>
-            <p>A mobile-optimized synthesizer built with Tauri and React.</p>
-
-            <div className="about-section">
-              <h3>Features</h3>
-              <ul>
-                <li>Real-time audio synthesis using FunDSP</li>
-                <li>Low-latency touch response</li>
-                <li>Cross-platform (Desktop & Android)</li>
-                <li>ADSR envelope with delay effects</li>
-                <li>Optimized for mobile performance</li>
-              </ul>
-            </div>
-
-            <div className="about-section">
-              <h3>Technical Details</h3>
-              <ul>
-                <li>Frontend: React + TypeScript</li>
-                <li>Backend: Rust + Tauri</li>
-                <li>Audio Engine: FunDSP + Oboe (Android)</li>
-                <li>Platform: {isAndroid ? 'Android' : 'Desktop'}</li>
-              </ul>
-            </div>
-          </div>
-        );
     }
   };
 
@@ -164,12 +135,6 @@ function App() {
             onClick={() => setActiveTab('effects')}
           >
             Effects
-          </button>
-          <button
-            className={`tab ${activeTab === 'about' ? 'active' : ''}`}
-            onClick={() => setActiveTab('about')}
-          >
-            About
           </button>
         </div>
         <div className="tab-content-container">{renderTabContent()}</div>
