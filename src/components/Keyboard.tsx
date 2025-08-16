@@ -73,7 +73,39 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
     return keys;
   };
 
+
+  // Restore scale filtering for display
+  // Check if a note is in the selected scale
+  const isNoteInScale = (note: string, key: string, scale: string): boolean => {
+    if (scale === 'chromatic') return true;
+    const noteWithoutOctave = note.replace(/\d+$/, '');
+    const scaleIntervals: { [key: string]: number[] } = {
+      'major': [0, 2, 4, 5, 7, 9, 11],
+      'minor': [0, 2, 3, 5, 7, 8, 10],
+      'major_pentatonic': [0, 2, 4, 7, 9],
+      'minor_pentatonic': [0, 3, 5, 7, 10]
+    };
+    const noteToSemitone: { [key: string]: number } = {
+      'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+      'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+    };
+    const intervals = scaleIntervals[scale];
+    if (!intervals) return true;
+    const rootSemitone = noteToSemitone[key];
+    const noteSemitone = noteToSemitone[noteWithoutOctave];
+    if (rootSemitone === undefined || noteSemitone === undefined) return true;
+    const interval = (noteSemitone - rootSemitone + 12) % 12;
+    return intervals.includes(interval);
+  };
+
   const keys = generateKeys(octaves);
+  let filteredKeys = keys.map((key) => ({
+    ...key,
+    inScale: isNoteInScale(key.note, selectedKey, selectedScale)
+  }));
+  if (!displayDisabledNotes) {
+    filteredKeys = filteredKeys.filter((key) => key.inScale);
+  }
 
 
 
@@ -84,18 +116,8 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
     e.preventDefault();
     e.stopPropagation();
 
-    let clientX: number;
-    if ('touches' in e && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-    } else if ('clientX' in e) {
-      clientX = e.clientX;
-    } else {
-      clientX = 0;
-    }
-
     const container = containerRef.current;
     if (container) {
-      const rect = container.getBoundingClientRect();
       let clientY: number;
       if ('touches' in e && e.touches.length > 0) {
         clientY = e.touches[0].clientY;
@@ -104,9 +126,10 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
       } else {
         clientY = 0;
       }
+      const rect = container.getBoundingClientRect();
       const y = clientY - rect.top;
       const height = rect.height;
-      // Map y to a key index (top = lowest note, bottom = highest)
+      // Always use the full keys array for mapping
       const keyIndex = Math.floor((y / height) * keys.length);
       const clampedIndex = Math.max(0, Math.min(keys.length - 1, keyIndex));
       const freq = keys[clampedIndex].frequency;
@@ -134,7 +157,7 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
       style={{ width: '100%', height: '100%' }}
     >
       <div className="keyboard" style={{ width: '100%', height: '100%' }}>
-        {keys.map((key) => {
+        {filteredKeys.map((key) => {
           const dynamicStyle = {
             flex: key.isBlack ? '0.8' : '1',
             minHeight: key.isBlack ? '12px' : '15px',
@@ -142,7 +165,7 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
           return (
             <button
               key={key.note}
-              className={`key ${key.isBlack ? 'black-key' : 'white-key'}`}
+              className={`key ${key.isBlack ? 'black-key' : 'white-key'}${!key.inScale ? ' disabled' : ''}`}
               style={{ ...dynamicStyle, pointerEvents: 'none' }}
               tabIndex={-1}
             >
