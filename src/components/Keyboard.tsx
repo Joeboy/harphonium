@@ -10,6 +10,7 @@ interface KeyboardProps {
   showNoteNames: boolean;
   transpose: number;
   displayDisabledNotes: boolean;
+  keyboardType: 'keys' | 'fretless';
 }
 
 interface KeyData {
@@ -18,7 +19,7 @@ interface KeyData {
   isBlack?: boolean;
 }
 
-const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale, showNoteNames, transpose, displayDisabledNotes }) => {
+const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale, showNoteNames, transpose, displayDisabledNotes, keyboardType }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
 
@@ -117,10 +118,15 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
   const [isPointerDown, setIsPointerDown] = useState(false);
 
-  // Helper to get note index from event
-  const getNoteIndexFromEvent = (e: React.TouchEvent | React.MouseEvent, playableKeys: typeof keys) => {
+
+  // Helper to get note index and pitch from event
+  const getNoteIndexAndPitchFromEvent = (
+    e: React.TouchEvent | React.MouseEvent,
+    playableKeys: typeof keys,
+    keyboardType: 'keys' | 'fretless'
+  ) => {
     const container = containerRef.current;
-    if (!container) return null;
+    if (!container) return { noteIndex: null, frequency: null };
     let clientY: number;
     if ('touches' in e && e.touches.length > 0) {
       clientY = e.touches[0].clientY;
@@ -132,39 +138,61 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
     const rect = container.getBoundingClientRect();
     const y = clientY - rect.top;
     const height = rect.height;
-    const keyIndex = Math.floor((y / height) * playableKeys.length);
-    return Math.max(0, Math.min(playableKeys.length - 1, keyIndex));
+    const pos = y / height;
+    let noteIndex = Math.floor(pos * playableKeys.length);
+    noteIndex = Math.max(0, Math.min(playableKeys.length - 1, noteIndex));
+
+    if (keyboardType === 'fretless') {
+      // Continuous pitch: interpolate between keys
+      const exactIndex = pos * (playableKeys.length - 1);
+      const lowerIndex = Math.floor(exactIndex);
+      const upperIndex = Math.ceil(exactIndex);
+      const t = exactIndex - lowerIndex;
+      const lowerFreq = playableKeys[lowerIndex].frequency;
+      const upperFreq = playableKeys[upperIndex]?.frequency ?? lowerFreq;
+      // Center of each key is "in tune"
+      // Interpolate linearly between lower and upper frequencies
+      const frequency = lowerFreq + (upperFreq - lowerFreq) * t;
+      return { noteIndex: lowerIndex, frequency };
+    } else {
+      // Discrete keys
+      return { noteIndex, frequency: playableKeys[noteIndex].frequency };
+    }
   };
+
 
   const handleKeyboardStart = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsPointerDown(true);
     const playableKeys = displayDisabledNotes ? keys : filteredKeys;
-    const noteIndex = getNoteIndexFromEvent(e, playableKeys);
-    if (noteIndex !== null) {
+    const { noteIndex, frequency } = getNoteIndexAndPitchFromEvent(e, playableKeys, keyboardType);
+    if (noteIndex !== null && frequency !== null) {
       const key = playableKeys[noteIndex];
       const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
       if (inScale) {
-        setTimeout(() => onNoteStart(key.frequency), 0);
+        setTimeout(() => onNoteStart(frequency), 0);
         setActiveNoteIndex(noteIndex);
       }
     }
   };
+
 
   const handleKeyboardMove = (e: React.TouchEvent | React.MouseEvent) => {
     if (!isPointerDown) return;
     e.preventDefault();
     e.stopPropagation();
     const playableKeys = displayDisabledNotes ? keys : filteredKeys;
-    const noteIndex = getNoteIndexFromEvent(e, playableKeys);
-    if (noteIndex !== null && noteIndex !== activeNoteIndex) {
+    const { noteIndex, frequency } = getNoteIndexAndPitchFromEvent(e, playableKeys, keyboardType);
+    if (noteIndex !== null) {
       const key = playableKeys[noteIndex];
       const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
       if (inScale) {
-        setTimeout(() => onNoteStop(), 0);
-        setTimeout(() => onNoteStart(key.frequency), 0);
-        setActiveNoteIndex(noteIndex);
+        if (noteIndex !== activeNoteIndex || keyboardType === 'fretless') {
+          setTimeout(() => onNoteStop(), 0);
+          setTimeout(() => onNoteStart(frequency!), 0);
+          setActiveNoteIndex(noteIndex);
+        }
       }
     }
   };

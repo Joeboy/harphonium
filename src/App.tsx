@@ -8,6 +8,7 @@ import './App.css';
 
 type TabType = 'synth' | 'keyboard' | 'effects' | 'info';
 
+
 function App() {
   const [synthState, setSynthState] = useState<string>('');
   const [isAndroid, setIsAndroid] = useState<boolean>(false);
@@ -20,6 +21,8 @@ function App() {
     transpose: 0,
     displayDisabledNotes: true,
   });
+  // keyboardType state is now lifted to App
+  const [keyboardType, setKeyboardType] = useState<'keys' | 'fretless'>('keys');
 
   useEffect(() => {
     // Detect if we're running on Android
@@ -70,6 +73,8 @@ function App() {
             onOctavesChange={setOctaves}
             scaleSettings={scaleSettings}
             onScaleSettingsChange={setScaleSettings}
+            keyboardType={keyboardType}
+            onKeyboardTypeChange={setKeyboardType}
           />
         );
 
@@ -143,6 +148,7 @@ function App() {
           showNoteNames={scaleSettings.showNoteNames}
           transpose={scaleSettings.transpose}
           displayDisabledNotes={scaleSettings.displayDisabledNotes}
+          keyboardType={keyboardType}
         />
       </div>
     </div>

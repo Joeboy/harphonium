@@ -18,6 +18,8 @@ interface KeyboardTabProps {
     transpose: number;
     displayDisabledNotes: boolean;
   }) => void;
+  keyboardType: 'keys' | 'fretless';
+  onKeyboardTypeChange: (type: 'keys' | 'fretless') => void;
 }
 
 const KeyboardTab: React.FC<KeyboardTabProps> = ({
@@ -25,13 +27,11 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
   onOctavesChange,
   scaleSettings,
   onScaleSettingsChange,
+  keyboardType,
+  onKeyboardTypeChange,
 }) => {
-  // Keyboard type is still local state (not in parent)
-  const [keyboardType, setKeyboardType] = React.useState<
-    'keys' |  'fretless'
-  >('keys');
   const handleKeyboardTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setKeyboardType(e.target.value as 'keys' | 'fretless');
+    onKeyboardTypeChange(e.target.value as 'keys' | 'fretless');
   };
 
   const handleOctavesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
