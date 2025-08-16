@@ -28,10 +28,10 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
 }) => {
   // Keyboard type is still local state (not in parent)
   const [keyboardType, setKeyboardType] = React.useState<
-    'keys' | 'slide' | 'fretless'
+    'keys' |  'fretless'
   >('keys');
   const handleKeyboardTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setKeyboardType(e.target.value as 'keys' | 'slide' | 'fretless');
+    setKeyboardType(e.target.value as 'keys' | 'fretless');
   };
 
   const handleOctavesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -122,16 +122,7 @@ const KeyboardTab: React.FC<KeyboardTabProps> = ({
               />
               Keys
             </label>
-            <label style={{ marginRight: '1em' }}>
-              <input
-                type="radio"
-                name="keyboard-type"
-                value="slide"
-                checked={keyboardType === 'slide'}
-                onChange={handleKeyboardTypeChange}
-              />
-              Slide
-            </label>
+ 
             <label>
               <input
                 type="radio"
