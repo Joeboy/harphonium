@@ -22,4 +22,4 @@ $ANDROID_BUILD_TOOLS/apksigner verify --print-certs app-release-signed.apk
 adb install -r --no-incremental app-release-signed.apk
 
 echo "Launching app..."
-$ANDROID_HOME/platform-tools/adb shell am start -n uk.co.joebutton.synthmob/.MainActivity
+$ANDROID_HOME/platform-tools/adb shell am start -n uk.co.joebutton.harphonium/.MainActivity

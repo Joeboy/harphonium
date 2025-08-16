@@ -1,4 +1,4 @@
-package uk.co.joebutton.synthmob
+package uk.co.joebutton.harphonium
 
 import android.os.Bundle
 import androidx.core.view.WindowCompat

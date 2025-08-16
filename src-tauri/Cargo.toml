@@ -1,11 +1,11 @@
 [package]
-name = "synthmob"
+name = "harphonium"
 version = "0.1.0"
 description = "A mobile synthesizer built with Tauri and React"
 authors = ["you"]
 license = ""
 repository = ""
-default-run = "synthmob"
+default-run = "harphonium"
 edition = "2021"
 rust-version = "1.60"
 
@@ -28,11 +28,11 @@ cpal = "0.15"           # Desktop audio library
 oboe = "0.6"            # Android audio library
 
 [[bin]]
-name = "synthmob"
+name = "harphonium"
 path = "src/main.rs"
 
 [lib]
-name = "synthmob_lib"
+name = "harphonium_lib"
 crate-type = ["cdylib"]
 
 [features]

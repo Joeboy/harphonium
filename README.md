@@ -1,9 +1,6 @@
 # Harphonium
 
-(Note: I'm currently renaming this app from SynthMob to Harphonium, as there are
-things called SynthMob already.)
-
-## A performance-oriented synthesizer that runs on your phone
+## A performance-oriented synthesizer for your phone
 
 A synthesizer app built with Tauri, React, Rust and FunDSP that runs on desktop
 and Android.
@@ -90,6 +87,17 @@ PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools
 and probably some other stuff set elsewhere. Sorry, you'll have to figure this
 out on your own.
 
+At some point, you'll need to do
+
+```bash
+cargo tauri android init
+```
+
+to create the android project structure under `src-tauri/gen/android/`. There
+are two files under `src-tauri/android/` that need to be copied to their
+equivalent locations under the `src-tauri/gen/android` folder. This isn't
+essential but the app won't run fullscreen otherwise.
+
 ### 4. Install Android Build Targets
 
 ```bash
@@ -137,7 +145,7 @@ To see Android logs:
 
 ```bash
 # Monitor app logs
-adb logcat | grep -E "(synthmob|Tauri)"
+adb logcat | grep -E "(harphonium|Tauri)"
 
 # Monitor audio-specific logs
 adb logcat | grep -E "(oboe|audio|AudioStream)"

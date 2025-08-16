@@ -66,7 +66,7 @@ function App() {
       case 'info':
         return (
           <div className="tab-content">
-            <h1>SynthMob</h1>
+            <h1>Harphonium</h1>
             <p className="subtitle">Mobile Synthesizer</p>
 
             <div className="status">
@@ -106,7 +106,7 @@ function App() {
       case 'about':
         return (
           <div className="tab-content">
-            <h2>About SynthMob</h2>
+            <h2>About Harphonium</h2>
             <p>A mobile-optimized synthesizer built with Tauri and React.</p>
             
             <div className="about-section">

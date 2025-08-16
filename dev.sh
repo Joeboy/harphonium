@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# SynthMob Development Scripts
+# Harphonium Development Scripts
 
 case "$1" in
     "dev")
@@ -220,10 +220,10 @@ case "$1" in
             echo "  ./dev.sh android-logs-clean # Clear logs buffer" 
             echo "  ./dev.sh android-logs-native # Monitor native touch logs"
             echo "  # Launch app manually on device, or:"
-            echo "  adb shell am start -n uk.co.joebutton.synthmob/.MainActivity"
+            echo "  adb shell am start -n uk.co.joebutton.harphonium/.MainActivity"
         else
             echo "❌ Installation failed. Try:"
-            echo "  adb uninstall uk.co.joebutton.synthmob"
+            echo "  adb uninstall uk.co.joebutton.harphonium"
             echo "  ./dev.sh android-install"
         fi
         ;;
@@ -263,9 +263,9 @@ case "$1" in
             $ANDROID_HOME/platform-tools/adb logcat -c
             echo "✅ Android logs cleared"
         fi
-        
-        echo "📱 Showing Android logs for SynthMob (${timeout_duration}s timeout)..."
-        timeout "${timeout_duration}" $ANDROID_HOME/platform-tools/adb logcat | grep -E "(synthmob|Playing|Stopping|RustStdoutStderr|Buffer|Performance|Oboe)" || echo "⏱️ Log monitoring timed out"
+
+        echo "📱 Showing Android logs for Harphonium (${timeout_duration}s timeout)..."
+        timeout "${timeout_duration}" $ANDROID_HOME/platform-tools/adb logcat | grep -E "(harphonium|Playing|Stopping|RustStdoutStderr|Buffer|Performance|Oboe)" || echo "⏱️ Log monitoring timed out"
         ;;
     "android-logs-clean")
         if [ -z "$ANDROID_HOME" ]; then
@@ -326,8 +326,8 @@ case "$1" in
         echo "Connected devices:"
         $ANDROID_HOME/platform-tools/adb devices
         echo ""
-        echo "SynthMob app processes:"
-        $ANDROID_HOME/platform-tools/adb shell "ps | grep synthmob" || echo "No SynthMob processes running"
+        echo "Harphonium app processes:"
+        $ANDROID_HOME/platform-tools/adb shell "ps | grep harphonium" || echo "No Harphonium processes running"
         echo ""
         echo "Available AVDs:"
         $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd -c
@@ -414,7 +414,7 @@ case "$1" in
         echo ""
         
         echo "Step 4: Launching app..."
-        $ANDROID_HOME/platform-tools/adb shell am start -n uk.co.joebutton.synthmob/.MainActivity
+        $ANDROID_HOME/platform-tools/adb shell am start -n uk.co.joebutton.harphonium/.MainActivity
         echo "✅ App launched on device"
         echo ""
         
@@ -449,7 +449,7 @@ case "$1" in
         echo "Clean complete"
         ;;
     *)
-        echo "SynthMob Development Helper"
+        echo "Harphonium Development Helper"
         echo ""
         echo "Usage: $0 {dev|dev-external|dev-frontend|build|build-release|android-setup|android-dev|android-emulator|android-build|android-install|android-device-test|android-logs|android-logs-clean|android-logs-native|android-status|clean}"
         echo ""

@@ -1364,6 +1364,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "harphonium"
+version = "0.1.0"
+dependencies = [
+ "cpal",
+ "fundsp",
+ "oboe",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3697,19 +3710,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.104",
-]
-
-[[package]]
-name = "synthmob"
-version = "0.1.0"
-dependencies = [
- "cpal",
- "fundsp",
- "oboe",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
 ]
 
 [[package]]

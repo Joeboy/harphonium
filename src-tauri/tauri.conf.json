@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2.0.0",
-  "productName": "SynthMob",
+  "productName": "Harphonium",
   "version": "0.1.0",
-  "identifier": "uk.co.joebutton.synthmob",
+  "identifier": "uk.co.joebutton.harphonium",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "SynthMob",
+        "title": "Harphonium",
         "width": 800,
         "height": 600
       }

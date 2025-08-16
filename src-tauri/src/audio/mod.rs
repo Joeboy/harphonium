@@ -1,4 +1,4 @@
-// Cross-platform audio module for SynthMob synthesizer
+// Cross-platform audio module for Harphonium synthesizer
 use std::sync::{Arc, Mutex};
 
 // Shared synthesis module using FunDSP
