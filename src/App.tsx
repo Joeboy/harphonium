@@ -8,7 +8,6 @@ import './App.css';
 
 type TabType = 'synth' | 'keyboard' | 'effects' | 'info';
 
-
 function App() {
   const [synthState, setSynthState] = useState<string>('');
   const [isAndroid, setIsAndroid] = useState<boolean>(false);
@@ -55,7 +54,11 @@ function App() {
     }
   }
 
-  async function stopNote() {
+  async function setFrequency(frequency: number) {
+    await invoke('set_frequency', { frequency });
+  }
+
+  async function noteOff() {
     try {
       console.log('Stopping note');
       await invoke('note_off');
@@ -150,7 +153,8 @@ function App() {
       <div className="right-pane">
         <Keyboard
           onNoteStart={playNote}
-          onNoteStop={stopNote}
+          onNoteStop={noteOff}
+          onNoteDrag={setFrequency}
           octaves={octaves}
           selectedKey={scaleSettings.selectedKey}
           selectedScale={scaleSettings.selectedScale}

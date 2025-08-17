@@ -4,6 +4,7 @@ import './Keyboard.css';
 interface KeyboardProps {
   onNoteStart: (frequency: number) => void;
   onNoteStop: () => void;
+  onNoteDrag: (frequency: number) => Promise<void>;
   octaves: number;
   selectedKey: string;
   selectedScale: string;
@@ -19,10 +20,19 @@ interface KeyData {
   isBlack?: boolean;
 }
 
-const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, selectedKey, selectedScale, showNoteNames, transpose, displayDisabledNotes, keyboardType }) => {
+const Keyboard: React.FC<KeyboardProps> = ({
+  onNoteStart,
+  onNoteStop,
+  onNoteDrag,
+  octaves,
+  selectedKey,
+  selectedScale,
+  showNoteNames,
+  transpose,
+  displayDisabledNotes,
+  keyboardType,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
-
-
 
   // Generate piano keys dynamically based on octaves setting
   const generateKeys = (numOctaves: number): KeyData[] => {
@@ -49,31 +59,31 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
     // For complete octaves (1, 2, 3), add 1 extra key to go from C to C
     // For fractional octaves (1.5, 2.5), use the fractional calculation
     const isCompleteOctave = numOctaves % 1 === 0;
-    const totalKeys = isCompleteOctave 
-      ? Math.floor(numOctaves) * 12 + 1  // Complete octaves: C to C (13, 25, 37 keys)
-      : Math.ceil(numOctaves * 12);      // Fractional octaves: as before
-    
+    const totalKeys = isCompleteOctave
+      ? Math.floor(numOctaves) * 12 + 1 // Complete octaves: C to C (13, 25, 37 keys)
+      : Math.ceil(numOctaves * 12); // Fractional octaves: as before
+
     // Generate keys from high to low (C6 down to C4) for consistent ordering
     for (let i = totalKeys - 1; i >= 0; i--) {
       const octaveOffset = Math.floor(i / 12);
       const noteIndex = i % 12;
       const currentOctave = startOctave + octaveOffset;
-      
+
       const baseNote = baseOctave[noteIndex];
       // Calculate frequency using the octave multiplier and transpose offset
       // Each octave doubles the frequency, and each semitone is 2^(1/12) ratio
-      const frequency = baseNote.frequency * Math.pow(2, octaveOffset + transpose / 12);
-      
+      const frequency =
+        baseNote.frequency * Math.pow(2, octaveOffset + transpose / 12);
+
       keys.push({
         frequency: frequency,
         note: `${baseNote.note}${currentOctave}`,
-        isBlack: baseNote.isBlack
+        isBlack: baseNote.isBlack,
       });
     }
 
     return keys;
   };
-
 
   // Restore scale filtering for display
   // Check if a note is in the selected scale
@@ -81,14 +91,24 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
     if (scale === 'chromatic') return true;
     const noteWithoutOctave = note.replace(/\d+$/, '');
     const scaleIntervals: { [key: string]: number[] } = {
-      'major': [0, 2, 4, 5, 7, 9, 11],
-      'minor': [0, 2, 3, 5, 7, 8, 10],
-      'major_pentatonic': [0, 2, 4, 7, 9],
-      'minor_pentatonic': [0, 3, 5, 7, 10]
+      major: [0, 2, 4, 5, 7, 9, 11],
+      minor: [0, 2, 3, 5, 7, 8, 10],
+      major_pentatonic: [0, 2, 4, 7, 9],
+      minor_pentatonic: [0, 3, 5, 7, 10],
     };
     const noteToSemitone: { [key: string]: number } = {
-      'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
-      'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+      C: 0,
+      'C#': 1,
+      D: 2,
+      'D#': 3,
+      E: 4,
+      F: 5,
+      'F#': 6,
+      G: 7,
+      'G#': 8,
+      A: 9,
+      'A#': 10,
+      B: 11,
     };
     const intervals = scaleIntervals[scale];
     if (!intervals) return true;
@@ -102,22 +122,17 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
   const keys = generateKeys(octaves);
   let filteredKeys = keys.map((key) => ({
     ...key,
-    inScale: isNoteInScale(key.note, selectedKey, selectedScale)
+    inScale: isNoteInScale(key.note, selectedKey, selectedScale),
   }));
   if (!displayDisabledNotes) {
     filteredKeys = filteredKeys.filter((key) => key.inScale);
   }
-
-
-
-
 
   // Calculate note pitch from horizontal position
 
   // Track the currently playing note index
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
   const [isPointerDown, setIsPointerDown] = useState(false);
-
 
   // Helper to get note index and pitch from event
   const getNoteIndexAndPitchFromEvent = (
@@ -151,7 +166,9 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
       const maxIdx = n - 0.5;
       const semitoneIndex = minIdx + (maxIdx - minIdx) * pos;
       // Clamp for noteIndex
-      const lowerIndex = Math.floor(Math.max(0, Math.min(n - 2, semitoneIndex)));
+      const lowerIndex = Math.floor(
+        Math.max(0, Math.min(n - 2, semitoneIndex))
+      );
       const upperIndex = lowerIndex + 1;
       const t = semitoneIndex - lowerIndex;
       // Get frequencies for lower and upper keys
@@ -169,13 +186,16 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
     }
   };
 
-
   const handleKeyboardStart = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsPointerDown(true);
     const playableKeys = displayDisabledNotes ? keys : filteredKeys;
-    const { noteIndex, frequency } = getNoteIndexAndPitchFromEvent(e, playableKeys, keyboardType);
+    const { noteIndex, frequency } = getNoteIndexAndPitchFromEvent(
+      e,
+      playableKeys,
+      keyboardType
+    );
     if (noteIndex !== null && frequency !== null) {
       const key = playableKeys[noteIndex];
       const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
@@ -186,20 +206,22 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
     }
   };
 
-
   const handleKeyboardMove = (e: React.TouchEvent | React.MouseEvent) => {
     if (!isPointerDown) return;
     e.preventDefault();
     e.stopPropagation();
     const playableKeys = displayDisabledNotes ? keys : filteredKeys;
-    const { noteIndex, frequency } = getNoteIndexAndPitchFromEvent(e, playableKeys, keyboardType);
+    const { noteIndex, frequency } = getNoteIndexAndPitchFromEvent(
+      e,
+      playableKeys,
+      keyboardType
+    );
     if (noteIndex !== null) {
       const key = playableKeys[noteIndex];
       const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
       if (inScale) {
         if (noteIndex !== activeNoteIndex || keyboardType === 'fretless') {
-          setTimeout(() => onNoteStop(), 0);
-          setTimeout(() => onNoteStart(frequency!), 0);
+          setTimeout(() => onNoteDrag(frequency!), 0);
           setActiveNoteIndex(noteIndex);
         }
       }
@@ -236,7 +258,9 @@ const Keyboard: React.FC<KeyboardProps> = ({ onNoteStart, onNoteStop, octaves, s
           return (
             <button
               key={key.note}
-              className={`key ${key.isBlack ? 'black-key' : 'white-key'}${!key.inScale ? ' disabled' : ''}`}
+              className={`key ${key.isBlack ? 'black-key' : 'white-key'}${
+                !key.inScale ? ' disabled' : ''
+              }`}
               style={{ ...dynamicStyle, pointerEvents: 'none' }}
               tabIndex={-1}
             >
