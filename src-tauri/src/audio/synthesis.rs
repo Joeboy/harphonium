@@ -295,13 +295,18 @@ impl FunDSPSynth {
         println!("Playing frequency: {} Hz", frequency);
     }
 
+    /// Set note frequency (for violin / fretless mode)
+    pub fn set_frequency(&mut self, frequency: f32) {
+        if self.enabled {
+            self.frequency_var.set_value(frequency);
+        }
+    }
+
     /// Stop the current note
-    pub fn stop_note(&mut self) {
+    pub fn note_off(&mut self) {
         if self.enabled {
             self.key_down_var.set_value(0.0); // Gate off - triggers ADSR release
         }
-
-        println!("Stopping audio");
     }
 
     /// Set master volume (0.0 = silent, 1.0 = full volume)

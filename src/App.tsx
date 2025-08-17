@@ -58,7 +58,7 @@ function App() {
   async function stopNote() {
     try {
       console.log('Stopping note');
-      await invoke('stop_note');
+      await invoke('note_off');
       setSynthState('🔇 No keys down');
     } catch (error) {
       setSynthState(`Error: ${error}`);

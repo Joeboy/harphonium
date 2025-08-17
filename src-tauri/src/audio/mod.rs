@@ -64,9 +64,18 @@ impl AudioEngine {
         }
     }
 
-    pub fn stop_note(&self) -> Result<(), String> {
+    pub fn set_frequency(&self, frequency: f32) -> Result<(), String> {
         if let Ok(mut synth) = self.synth.lock() {
-            synth.stop_note();
+            synth.set_frequency(frequency);
+            Ok(())
+        } else {
+            Err("Failed to acquire synth lock".to_string())
+        }
+    }
+
+    pub fn note_off(&self) -> Result<(), String> {
+        if let Ok(mut synth) = self.synth.lock() {
+            synth.note_off();
             Ok(())
         } else {
             Err("Failed to acquire synth lock".to_string())
@@ -288,7 +297,7 @@ pub fn initialize_audio() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn play_frequency(frequency: f32) -> Result<(), String> {
+pub fn play_note(frequency: f32) -> Result<(), String> {
     // Initialize audio if not already done
     if let Err(e) = initialize_audio() {
         return Err(format!("Failed to initialize audio: {}", e));
@@ -301,9 +310,24 @@ pub fn play_frequency(frequency: f32) -> Result<(), String> {
     }
 }
 
-pub fn stop_audio() -> Result<(), String> {
+/// Just set the frequency, for violin / fretless mode where
+/// the user can slide around the keyboard without triggering notes
+pub fn set_frequency(frequency: f32) -> Result<(), String> {
+    // Initialize audio if not already done
+    if let Err(e) = initialize_audio() {
+        return Err(format!("Failed to initialize audio: {}", e));
+    }
+
     if let Some(engine) = AUDIO_ENGINE.get() {
-        engine.stop_note()
+        engine.set_frequency(frequency)
+    } else {
+        Err("Audio engine not initialized".to_string())
+    }
+}
+
+pub fn note_off() -> Result<(), String> {
+    if let Some(engine) = AUDIO_ENGINE.get() {
+        engine.note_off()
     } else {
         Err("Audio engine not initialized".to_string())
     }

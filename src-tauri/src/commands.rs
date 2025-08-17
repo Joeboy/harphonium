@@ -5,14 +5,21 @@ use crate::audio;
 
 #[tauri::command]
 pub async fn play_note(frequency: f32) {
-    if let Err(e) = audio::play_frequency(frequency) {
+    if let Err(e) = audio::play_note(frequency) {
         eprintln!("Error playing note: {}", e);
     }
 }
 
 #[tauri::command]
-pub async fn stop_note() {
-    if let Err(e) = audio::stop_audio() {
+pub async fn set_frequency(frequency:f32) {
+    if let Err(e) = audio::set_frequency(frequency) {
+        eprintln!("Error setting frequency: {}", e);
+    }
+}
+
+#[tauri::command]
+pub async fn note_off() {
+    if let Err(e) = audio::note_off() {
         eprintln!("Error stopping note: {}", e);
     }
 }

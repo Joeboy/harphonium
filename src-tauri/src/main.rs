@@ -16,7 +16,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::play_note,
-            commands::stop_note,
+            commands::set_frequency,
+            commands::note_off,
             commands::set_master_volume,
             commands::get_master_volume,
             commands::set_waveform,

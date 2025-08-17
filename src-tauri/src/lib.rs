@@ -19,7 +19,8 @@ pub fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::play_note,
-            commands::stop_note,
+            commands::set_frequency,
+            commands::note_off,
             commands::set_master_volume,
             commands::get_master_volume,
             commands::set_waveform,
@@ -40,6 +41,8 @@ pub fn main() {
             commands::get_delay_mix,
             commands::set_filter_cutoff,
             commands::get_filter_cutoff,
+            commands::set_filter_resonance,
+            commands::get_filter_resonance,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
