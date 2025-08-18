@@ -115,7 +115,7 @@ impl FunDSPSynth {
 
         // Create the synthesis chain dynamically
         let freq_dc_id = net.push(Box::new(var(&frequency_var)));
-        let freq_smooth_id = net.push(Box::new(afollow(0.0005, 0.0005)));
+        let freq_smooth_id = net.push(Box::new(afollow(0.001, 0.001)));
         net.connect(freq_dc_id, 0, freq_smooth_id, 0);
 
         let current_waveform = Waveform::default();
@@ -190,7 +190,11 @@ impl FunDSPSynth {
         let master_vol_nodeid = net.push(Box::new(split() >> (pass() * var(&master_volume_var))));
         net.pipe_all(filter_nodeid, master_vol_nodeid);
 
-        net.pipe_output(master_vol_nodeid);
+
+        let dcblock_id = net.push(Box::new(dcblock()));
+        net.pipe_all(master_vol_nodeid, dcblock_id);
+
+        net.pipe_output(dcblock_id);
 
         let mut backend = net.backend();
         backend.set_sample_rate(sample_rate as f64);
