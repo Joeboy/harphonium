@@ -57,12 +57,3 @@ pub fn start_audio_stream(
 
     Ok(())
 }
-
-// // Legacy function for backwards compatibility
-// pub fn initialize_audio_engine(
-//     _is_playing: std::sync::Arc<std::sync::atomic::AtomicBool>,
-//     _frequency_bits: std::sync::Arc<std::sync::atomic::AtomicU32>,
-// ) -> Result<(), Box<dyn std::error::Error>> {
-//     eprintln!("Warning: initialize_audio_engine is deprecated. Use start_audio_stream instead.");
-//     Ok(())
-// }

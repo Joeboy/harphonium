@@ -298,11 +298,6 @@ pub fn initialize_audio() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 pub fn play_note(frequency: f32) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.play_note(frequency)
     } else {
@@ -313,11 +308,6 @@ pub fn play_note(frequency: f32) -> Result<(), String> {
 /// Just set the frequency, for violin / fretless mode where
 /// the user can slide around the keyboard without triggering notes
 pub fn set_frequency(frequency: f32) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.set_frequency(frequency)
     } else {
@@ -334,11 +324,6 @@ pub fn note_off() -> Result<(), String> {
 }
 
 pub fn set_master_volume(volume: f32) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.set_master_volume(volume)
     } else {
@@ -356,11 +341,6 @@ pub fn get_master_volume() -> f32 {
 
 /// Set the current waveform
 pub fn set_waveform(waveform_str: &str) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     // Convert string to Waveform enum
     let waveform = match Waveform::from_str(waveform_str) {
         Some(w) => w,
@@ -385,11 +365,6 @@ pub fn get_waveform() -> String {
 
 /// Set ADSR attack time
 pub fn set_attack(attack: f32) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.set_attack(attack)
     } else {
@@ -408,11 +383,6 @@ pub fn get_attack() -> f32 {
 
 /// Set ADSR decay time
 pub fn set_decay(decay: f32) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.set_decay(decay)
     } else {
@@ -431,11 +401,6 @@ pub fn get_decay() -> f32 {
 
 /// Set ADSR sustain level
 pub fn set_sustain(sustain: f32) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.set_sustain(sustain)
     } else {
@@ -454,11 +419,6 @@ pub fn get_sustain() -> f32 {
 
 /// Set ADSR release time
 pub fn set_release(release: f32) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.set_release(release)
     } else {
@@ -477,11 +437,6 @@ pub fn get_release() -> f32 {
 
 // Set delay time (in seconds or ms as appropriate for your synth)
 pub fn set_delay_time(_delay_time: f32) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.set_delay_time(_delay_time)
     } else {
@@ -498,11 +453,6 @@ pub fn get_delay_time() -> f32 {
 }
 
 pub fn set_delay_feedback(_delay_feedback: f32) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.set_delay_feedback(_delay_feedback)
     } else {
@@ -519,12 +469,6 @@ pub fn get_delay_feedback() -> f32 {
 }
 // Set delay mix (0.0 = dry, 1.0 = fully wet)
 pub fn set_delay_mix(_delay_mix: f32) -> Result<(), String> {
-    // TODO: Implement actual delay mix control in your synth
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.set_delay_mix(_delay_mix)
     } else {
@@ -542,11 +486,6 @@ pub fn get_delay_mix() -> f32 {
 
 
 pub fn set_filter_cutoff(_cutoff: f32) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.set_filter_cutoff(_cutoff)
     } else {
@@ -563,11 +502,6 @@ pub fn get_filter_cutoff() -> f32 {
 }
 
 pub fn set_filter_resonance(_resonance: f32) -> Result<(), String> {
-    // Initialize audio if not already done
-    if let Err(e) = initialize_audio() {
-        return Err(format!("Failed to initialize audio: {}", e));
-    }
-
     if let Some(engine) = AUDIO_ENGINE.get() {
         engine.set_filter_resonance(_resonance)
     } else {
