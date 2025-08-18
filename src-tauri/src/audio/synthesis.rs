@@ -120,8 +120,13 @@ impl FunDSPSynth {
         let oscillator_nodeid = net.push(current_waveform.create_oscillator());
         net.pipe_all(freq_dc_id, oscillator_nodeid);
 
-        // ADSR
+        // ADSR stuff
         let key_down_nodeid = net.push(Box::new(var(&key_down_var)));
+
+        // Smoothing to try to mitigate audible clicks when retriggering the adsr
+        let gate_smoother_id = net.push(Box::new(afollow(0.001, 0.001)));
+        net.connect(key_down_nodeid, 0, gate_smoother_id, 0);
+
         let adsr_envelope = adsr_live(
             attack_var.value(),
             decay_var.value(),
@@ -129,10 +134,15 @@ impl FunDSPSynth {
             release_var.value(),
         );
         let adsr_nodeid = net.push(Box::new(adsr_envelope));
-        net.pipe_all(key_down_nodeid, adsr_nodeid);
+        net.pipe_all(gate_smoother_id, adsr_nodeid);
+
+        // More ADSR smoothing:
+        // Keep this even shorter than the gate smoother so you don't blur transients.
+        let env_micro_id = net.push(Box::new(afollow(0.0005, 0.0005)));
+        net.connect(adsr_nodeid, 0, env_micro_id, 0);
         let vca_nodeid = net.push(Box::new(pass() * pass()));
         net.connect(oscillator_nodeid, 0, vca_nodeid, 0);
-        net.connect(adsr_nodeid, 0, vca_nodeid, 1);
+        net.connect(env_micro_id, 0, vca_nodeid, 1);
 
         // Delay stuff
 
