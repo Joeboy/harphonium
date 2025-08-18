@@ -115,10 +115,12 @@ impl FunDSPSynth {
 
         // Create the synthesis chain dynamically
         let freq_dc_id = net.push(Box::new(var(&frequency_var)));
+        let freq_smooth_id = net.push(Box::new(afollow(0.0005, 0.0005)));
+        net.connect(freq_dc_id, 0, freq_smooth_id, 0);
 
         let current_waveform = Waveform::default();
         let oscillator_nodeid = net.push(current_waveform.create_oscillator());
-        net.pipe_all(freq_dc_id, oscillator_nodeid);
+        net.pipe_all(freq_smooth_id, oscillator_nodeid);
 
         // ADSR stuff
         let key_down_nodeid = net.push(Box::new(var(&key_down_var)));
@@ -137,7 +139,6 @@ impl FunDSPSynth {
         net.pipe_all(gate_smoother_id, adsr_nodeid);
 
         // More ADSR smoothing:
-        // Keep this even shorter than the gate smoother so you don't blur transients.
         let env_micro_id = net.push(Box::new(afollow(0.0005, 0.0005)));
         net.connect(adsr_nodeid, 0, env_micro_id, 0);
         let vca_nodeid = net.push(Box::new(pass() * pass()));
