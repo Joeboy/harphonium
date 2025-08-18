@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
+import throttle from 'lodash.throttle';
 import './Keyboard.css';
 
 interface KeyboardProps {
@@ -32,6 +33,8 @@ const Keyboard: React.FC<KeyboardProps> = ({
   displayDisabledNotes,
   keyboardType,
 }) => {
+  // Throttle onNoteDrag to fire at most every 20ms (50Hz)
+  const throttledOnNoteDrag = useMemo(() => throttle(onNoteDrag, 20, { trailing: true }), [onNoteDrag]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Generate piano keys dynamically based on octaves setting
@@ -221,7 +224,7 @@ const Keyboard: React.FC<KeyboardProps> = ({
       const inScale = isNoteInScale(key.note, selectedKey, selectedScale);
       if (inScale) {
         if (noteIndex !== activeNoteIndex || keyboardType === 'fretless') {
-          setTimeout(() => onNoteDrag(frequency!), 0);
+          setTimeout(() => throttledOnNoteDrag(frequency!), 0);
           setActiveNoteIndex(noteIndex);
         }
       }
