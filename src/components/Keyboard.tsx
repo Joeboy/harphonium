@@ -250,17 +250,19 @@ const Keyboard: React.FC<KeyboardProps> = ({
       style={{ width: '100%', height: '100%' }}
     >
       <div className="keyboard" style={{ width: '100%', height: '100%' }}>
-        {filteredKeys.map((key) => {
+        {filteredKeys.map((key, idx) => {
           const dynamicStyle = {
             flex: key.isBlack ? '0.8' : '1',
             minHeight: key.isBlack ? '12px' : '15px',
           };
+          // Show visually pressed key in keyboard mode
+          const isActive = keyboardType === 'keys' && idx === activeNoteIndex;
           return (
             <button
               key={key.note}
               className={`key ${key.isBlack ? 'black-key' : 'white-key'}${
                 !key.inScale ? ' disabled' : ''
-              }`}
+              }${isActive ? ' active' : ''}`}
               style={{ ...dynamicStyle, pointerEvents: 'none' }}
               tabIndex={-1}
             >
