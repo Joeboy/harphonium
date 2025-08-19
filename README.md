@@ -2,21 +2,21 @@
 
 ## A performance-oriented synthesizer for your phone
 
-A synthesizer app built with Tauri, React, Rust and FunDSP that runs on desktop
-and Android.
+A synthesizer app built with Tauri, React, Rust and FunDSP. It runs on Android
+or Desktop, but is primarily intended as a mobile phone app.
 
 ![alt text](harphonium-keyboard-tab.png)
 
 Aren't there enough synths already? Well maybe, but I wanted one that:
 
 - Has a piano-like keyboard layout
-- Has the keyboard oriented vertically, as that's the more natural way to hold a
-  phone
+- Has the keyboard oriented vertically, as that's the more natural way to
+  operate a phone
 - Allows for disabling or removing of notes aren't in the currently selected
   scale (as it's really easy to fat-finger a phone keyboard)
-- Allows the keyboard to be played like a regular piano keyboard, or more like a
-  stylophone, with optional tuning constraint (So far only the piano mode is
-  done)
+- Allows the keyboard to be played like a regular piano keyboard, or in
+  "fretless" mode (so it's possible to slide around the keyboard without being
+  constrained to the "scale")
 - Acceptably low latency for live performance (it's currently OK but could
   probably be better)
 
@@ -27,11 +27,23 @@ Things I don't care so much about, which are nevertheless true:
 - The UI is a React app that communicates with the synth backend via IPC. That
   makes for fairly accessible frontend development, without compromising the
   audio performance
+- The synth options are fairly basic. Not really intending to make a
+  fully-featured do-everything synth.
 - Android release apk is currently about 17Mb, which isn't spectacular or
   anything but it's a lot better than an Electron app would be
 
-At the time of writing, I've done about three days of vibe coding on this. A lot
-of stuff is done and it seems basically viable, but temper your expectations.
+Some issues:
+
+- Something is funky (not in the good sense) when you're in fretless mode and
+  "show disabled keys" is off.
+- Occasional audio glitches (clicks) on Android. I've tried lots of things and
+  they seem less frequent now, but they're still happening occasionally.
+- Audio disconnections, in both Android and Linux (and probably other platforms
+  I guess). Sometimes I've come back to the app after leaving it running a while
+  and found it no longer makes noises. Not a huge deal but I probably need to
+  implement some sort of reconnection
+- Issues are stored in project readme even though there's a perfectly good issue
+  tracker for that sort of thing.
 
 ## Architecture
 
