@@ -2,6 +2,59 @@
 use super::synthesis::FunDSPSynth;
 use std::sync::{Arc, Mutex};
 
+use std::cell::Cell;
+
+#[inline]
+pub fn enable_flush_denormals() {
+    // --- AArch64 (ARMv8, 64-bit): FPCR (FZ=bit24, FZ16=bit19) ---
+    #[cfg(target_arch = "aarch64")]
+    unsafe {
+        let mut fpcr: u64;
+        core::arch::asm!("mrs {0}, fpcr", out(reg) fpcr);
+        fpcr |= 1 << 24; // FZ
+        fpcr |= 1 << 19; // FZ16 (harmless if unused)
+        core::arch::asm!("msr fpcr, {0}", in(reg) fpcr);
+    }
+
+    // --- ARMv7/AArch32 (32-bit): FPSCR (FZ=bit24) ---
+    // Gate on any VFP generation that guarantees VMRS/VMSR exist.
+    #[cfg(all(
+        target_arch = "arm",
+        any(
+            target_feature = "vfp2",
+            target_feature = "vfp3",
+            target_feature = "vfp4",
+            target_feature = "fp-armv8"
+        )
+    ))]
+    unsafe {
+        let mut fpscr: u32;
+        core::arch::asm!("vmrs {0}, fpscr", out(reg) fpscr);
+        fpscr |= 1 << 24; // FZ
+        core::arch::asm!("vmsr fpscr, {0}", in(reg) fpscr);
+    }
+
+    // Optional: on other targets do nothing (keeps non-ARM builds happy).
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
+    {
+        // no-op
+    }
+}
+
+thread_local! {
+    static DENORMALS_ENABLED: Cell<bool> = Cell::new(false);
+}
+
+#[inline]
+pub fn enable_denormals_once_per_thread() {
+    DENORMALS_ENABLED.with(|flag| {
+        if !flag.get() {
+            enable_flush_denormals();
+            flag.set(true);
+        }
+    });
+}
+
 pub fn start_audio_stream(
     synth: Arc<Mutex<FunDSPSynth>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -25,6 +78,8 @@ pub fn start_audio_stream(
             _stream: &mut dyn AudioOutputStreamSafe,
             frames: &mut [f32],
         ) -> DataCallbackResult {
+            enable_denormals_once_per_thread();
+
             // Generate audio using FunDSP synthesis without locking if unavailable
             match self.synth.try_lock() {
                 Ok(mut synth_guard) => {
@@ -65,7 +120,6 @@ pub fn start_audio_stream(
         actual_sample_rate as i32, actual_callback_size
     );
 
-    // Start the stream
     stream.start()?;
     println!("🔥 Android CALLBACK audio stream started");
 
