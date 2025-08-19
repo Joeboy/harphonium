@@ -25,7 +25,7 @@ fundsp = "0.20"         # Advanced audio DSP library (local checkout)
 cpal = "0.15"           # Desktop audio library
 
 [target.'cfg(target_os = "android")'.dependencies]
-oboe = "0.6"            # Android audio library
+oboe = "0.6.1"            # Android audio library
 
 [[bin]]
 name = "harphonium"
