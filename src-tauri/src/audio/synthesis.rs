@@ -6,6 +6,46 @@ use fundsp::hacker::*;
 use fundsp::buffer::{BufferArray, BufferRef};
 use fundsp::hacker::{MAX_BUFFER_SIZE, U1};
 
+/// Enum representing all possible audio commands/events
+#[derive(Debug)]
+pub enum AudioEvent {
+    PlayNote { frequency: f32 },
+    SetFrequency { frequency: f32 },
+    NoteOff,
+    SetMasterVolume { volume: f32 },
+    SetWaveform { waveform: Waveform },
+    SetAttack { attack: f32 },
+    SetDecay { decay: f32 },
+    SetSustain { sustain: f32 },
+    SetRelease { release: f32 },
+    SetDelayTime { delay_time: f32 },
+    SetDelayFeedback { delay_feedback: f32 },
+    SetDelayMix { delay_mix: f32 },
+    SetFilterCutoff { cutoff: f32 },
+    SetFilterResonance { resonance: f32 },
+    // Query events:
+    GetMasterVolume,
+    GetWaveform,
+    GetAttack,
+    GetDecay,
+    GetSustain,
+    GetRelease,
+    GetDelayTime,
+    GetDelayFeedback,
+    GetDelayMix,
+    GetFilterCutoff,
+    GetFilterResonance,
+}
+
+#[derive(Debug)]
+pub enum AudioEventResult {
+    Ok,
+    ValueF32(f32),
+    // ValueString(String),
+    ValueWaveform(Waveform),
+    Err(String),
+}
+
 /// Waveform types available in the synthesizer
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Waveform {
@@ -189,7 +229,6 @@ impl FunDSPSynth {
 
         let master_vol_nodeid = net.push(Box::new(split() >> (pass() * var(&master_volume_var))));
         net.pipe_all(filter_nodeid, master_vol_nodeid);
-
 
         let dcblock_id = net.push(Box::new(dcblock()));
         net.pipe_all(master_vol_nodeid, dcblock_id);
@@ -468,5 +507,80 @@ impl FunDSPSynth {
     /// Get filter resonance
     pub fn get_filter_resonance(&self) -> f32 {
         self.filter_resonance_var.value()
+    }
+
+    /// Route UI events to the appropriate methods
+    pub fn handle_event(&mut self, event: AudioEvent) -> AudioEventResult {
+        match event {
+            AudioEvent::PlayNote { frequency } => {
+                self.play_note(frequency);
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetFrequency { frequency } => {
+                self.set_frequency(frequency);
+                AudioEventResult::Ok
+            }
+            AudioEvent::NoteOff => {
+                self.note_off();
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetMasterVolume { volume } => {
+                self.set_master_volume(volume);
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetWaveform { waveform } => {
+                self.set_waveform(waveform);
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetAttack { attack } => {
+                self.set_attack(attack);
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetDecay { decay } => {
+                self.set_decay(decay);
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetSustain { sustain } => {
+                self.set_sustain(sustain);
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetRelease { release } => {
+                self.set_release(release);
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetDelayTime { delay_time } => {
+                self.set_delay_time(delay_time);
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetDelayFeedback { delay_feedback } => {
+                self.set_delay_feedback(delay_feedback);
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetDelayMix { delay_mix } => {
+                self.set_delay_mix(delay_mix);
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetFilterCutoff { cutoff } => {
+                self.set_filter_cutoff(cutoff);
+                AudioEventResult::Ok
+            }
+            AudioEvent::SetFilterResonance { resonance } => {
+                self.set_filter_resonance(resonance);
+                AudioEventResult::Ok
+            }
+            AudioEvent::GetMasterVolume => AudioEventResult::ValueF32(self.get_master_volume()),
+            AudioEvent::GetWaveform => AudioEventResult::ValueWaveform(self.get_waveform()),
+            AudioEvent::GetAttack => AudioEventResult::ValueF32(self.get_attack()),
+            AudioEvent::GetDecay => AudioEventResult::ValueF32(self.get_decay()),
+            AudioEvent::GetSustain => AudioEventResult::ValueF32(self.get_sustain()),
+            AudioEvent::GetRelease => AudioEventResult::ValueF32(self.get_release()),
+            AudioEvent::GetDelayTime => AudioEventResult::ValueF32(self.get_delay_time()),
+            AudioEvent::GetDelayFeedback => AudioEventResult::ValueF32(self.get_delay_feedback()),
+            AudioEvent::GetDelayMix => AudioEventResult::ValueF32(self.get_delay_mix()),
+            AudioEvent::GetFilterCutoff => AudioEventResult::ValueF32(self.get_filter_cutoff()),
+            AudioEvent::GetFilterResonance => {
+                AudioEventResult::ValueF32(self.get_filter_resonance())
+            }
+        }
     }
 }

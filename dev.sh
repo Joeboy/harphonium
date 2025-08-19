@@ -234,7 +234,7 @@ case "$1" in
         fi
         
         # Default timeout
-        timeout_duration=10
+        timeout_duration=30
         clean_first=false
         
         # Parse all arguments for flags
