@@ -2,6 +2,10 @@
 use super::synthesis::FunDSPSynth;
 use std::sync::{Arc, Mutex};
 
+use oboe::{
+    AudioOutputCallback, AudioOutputStreamSafe, AudioStream, AudioStreamBase, AudioStreamBuilder,
+    AudioStreamSafe, DataCallbackResult, PerformanceMode, SharingMode,
+};
 use std::cell::Cell;
 
 #[inline]
@@ -58,11 +62,6 @@ pub fn enable_denormals_once_per_thread() {
 pub fn start_audio_stream(
     synth: Arc<Mutex<FunDSPSynth>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    use oboe::{
-        AudioOutputCallback, AudioOutputStreamSafe, AudioStream, AudioStreamBase,
-        AudioStreamBuilder, AudioStreamSafe, DataCallbackResult, PerformanceMode, SharingMode,
-    };
-
     println!("Initializing Android audio engine with Oboe - CALLBACK MODE");
 
     // Create callback handler; never block in RT thread
@@ -126,6 +125,7 @@ pub fn start_audio_stream(
     // Keep stream alive in a background thread
     std::thread::spawn(move || {
         println!("🔧 Callback mode stream keeper thread started");
+        let mut old_xrun_count = 0;
         loop {
             match stream.get_state() {
                 oboe::StreamState::Started => {
@@ -143,6 +143,17 @@ pub fn start_audio_stream(
                 }
                 _ => {
                     std::thread::sleep(std::time::Duration::from_secs(1));
+                }
+            }
+            match stream.get_xrun_count() {
+                Ok(count) => {
+                    if count != old_xrun_count {
+                        println!("⚠️ XRUN detected! Count: {}", count);
+                        old_xrun_count = count;
+                    }
+                }
+                Err(e) => {
+                    println!("⚠️ Failed to get XRUN count: {}", e);
                 }
             }
         }
