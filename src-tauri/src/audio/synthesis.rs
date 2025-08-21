@@ -1,10 +1,61 @@
-// Shared audio synthesis module using FunDSP
-// This module provides FunDSP audio generation for both desktop and Android platforms
-
-use fundsp::hacker::*;
-
+/// Audio synthesis module using FunDSP
 use fundsp::buffer::{BufferArray, BufferRef};
-use fundsp::hacker::{MAX_BUFFER_SIZE, U1};
+use fundsp::hacker::{
+    adsr_live, afollow, dcblock, delay, lowpass, pass, saw, shared, sine, split, square, triangle,
+    var, AudioUnit, Net, NodeId, MAX_BUFFER_SIZE, U1,
+};
+use rtrb::Consumer;
+use std::collections::HashMap;
+
+pub fn drain_and_coalesce_events(consumer: &mut Consumer<AudioEvent>) -> Vec<AudioEvent> {
+    let mut last_events: HashMap<&'static str, AudioEvent> = HashMap::new();
+    let mut passthrough_events = Vec::new();
+
+    while let Ok(event) = consumer.pop() {
+        match &event {
+            AudioEvent::SetFrequency { .. } => {
+                last_events.insert("SetFrequency", event);
+            }
+            AudioEvent::SetMasterVolume { .. } => {
+                last_events.insert("SetMasterVolume", event);
+            }
+            AudioEvent::SetWaveform { .. } => {
+                last_events.insert("SetWaveform", event);
+            }
+            AudioEvent::SetAttack { .. } => {
+                last_events.insert("SetAttack", event);
+            }
+            AudioEvent::SetDecay { .. } => {
+                last_events.insert("SetDecay", event);
+            }
+            AudioEvent::SetSustain { .. } => {
+                last_events.insert("SetSustain", event);
+            }
+            AudioEvent::SetRelease { .. } => {
+                last_events.insert("SetRelease", event);
+            }
+            AudioEvent::SetDelayTime { .. } => {
+                last_events.insert("SetDelayTime", event);
+            }
+            AudioEvent::SetDelayFeedback { .. } => {
+                last_events.insert("SetDelayFeedback", event);
+            }
+            AudioEvent::SetDelayMix { .. } => {
+                last_events.insert("SetDelayMix", event);
+            }
+            AudioEvent::SetFilterCutoff { .. } => {
+                last_events.insert("SetFilterCutoff", event);
+            }
+            AudioEvent::SetFilterResonance { .. } => {
+                last_events.insert("SetFilterResonance", event);
+            }
+            // Non-coalescable events (e.g., PlayNote, NoteOff, queries) go straight through
+            _ => passthrough_events.push(event),
+        }
+    }
+    passthrough_events.extend(last_events.into_values());
+    passthrough_events
+}
 
 /// Enum representing all possible audio commands/events
 #[derive(Debug)]
@@ -130,10 +181,18 @@ pub struct FunDSPSynth {
     sample_rate: f32,
     /// Whether FunDSP is enabled (can be disabled if panics occur)
     enabled: bool,
+    // pub queue: AudioEventQueue,
+    event_consumer: rtrb::Consumer<AudioEvent>,
 }
 
 impl FunDSPSynth {
-    pub fn new(sample_rate: f32) -> Result<Self, Box<dyn std::error::Error>> {
+    #[allow(dead_code)]
+    pub fn new(
+        sample_rate: f32,
+        event_consumer: rtrb::Consumer<AudioEvent>,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        // let queue = AudioEventQueue::new(64);
+
         let frequency_var = shared(440.0);
         let key_down_var = shared(0.0); // 0.0 = key up/silent, 1.0 = key down/playing
         let master_volume_var = shared(0.7); // Default to 70% volume
@@ -271,30 +330,30 @@ impl FunDSPSynth {
 
             sample_rate,
             enabled: true,
+            event_consumer,
         })
     }
 
-    /// Fill the output buffer with audio samples
+    #[allow(dead_code)]
     pub fn fill_buffer(&mut self, output: &mut [f32]) {
         if !self.enabled {
             output.fill(0.0);
             return;
         }
+        let events = drain_and_coalesce_events(&mut self.event_consumer);
+        for event in events {
+            self.handle_event(event);
+        }
 
         let mut i = 0;
+        let mut block = BufferArray::<U1>::new();
+        let input = BufferRef::empty();
         while i < output.len() {
             // Work in chunks up to MAX_BUFFER_SIZE (usually 64 samples)
             let n = std::cmp::min(output.len() - i, MAX_BUFFER_SIZE);
-            // Prepare an empty input buffer (no input channels)
-            let input = BufferRef::empty();
-
-            // Prepare an output buffer with 1 channel
-            let mut block = BufferArray::<U1>::new();
-
-            // Process a block of samples
             self.backend.process(n, &input, &mut block.buffer_mut());
 
-            // Copy from the block into your output buffer, clamping each sample
+            // Copy from the block into the output buffer, clamping each sample
             let ch = block.buffer_ref().channel_f32(0);
             for (dst, &src) in output[i..i + n].iter_mut().zip(&ch[..n]) {
                 *dst = src.clamp(-1.0, 1.0);
@@ -305,6 +364,7 @@ impl FunDSPSynth {
     }
 
     /// Update the backend sample rate and reset safely.
+    #[allow(dead_code)]
     pub fn set_sample_rate(&mut self, sample_rate: f32) {
         if sample_rate > 0.0 {
             self.sample_rate = sample_rate;
@@ -346,7 +406,7 @@ impl FunDSPSynth {
             self.key_down_var.set_value(1.0); // Gate on - triggers ADSR attack
         }
 
-        println!("Playing frequency: {} Hz", frequency);
+        // println!("Playing frequency: {} Hz", frequency);
     }
 
     /// Set note frequency (for violin / fretless mode)

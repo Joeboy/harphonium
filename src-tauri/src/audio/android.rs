@@ -3,8 +3,8 @@ use super::synthesis::FunDSPSynth;
 use std::sync::{Arc, Mutex};
 
 use oboe::{
-    AudioOutputCallback, AudioOutputStreamSafe, AudioStream, AudioStreamBase, AudioStreamBuilder,
-    AudioStreamSafe, DataCallbackResult, PerformanceMode, SharingMode,
+    AudioOutputCallback, AudioOutputStreamSafe, AudioStreamBuilder, DataCallbackResult,
+    PerformanceMode, SharingMode, AudioStreamSafe, AudioStream, AudioStreamBase
 };
 use std::cell::Cell;
 
@@ -86,6 +86,7 @@ pub fn start_audio_stream(
                 }
                 Err(_) => {
                     // Fill with silence on contention to avoid glitches / priority inversion
+                    // println!("⚠️ Audio synthesis locked, outputting silence");
                     frames.fill(0.0);
                 }
             }
@@ -97,8 +98,8 @@ pub fn start_audio_stream(
     let mut stream = AudioStreamBuilder::default()
         .set_format::<f32>()
         .set_channel_count::<oboe::Mono>()
-        .set_sample_rate(24000)
-        .set_frames_per_callback(64)
+        .set_sample_rate(48000)
+        .set_frames_per_callback(32)
         .set_performance_mode(PerformanceMode::LowLatency)
         .set_sharing_mode(SharingMode::Shared)
         .set_callback(AudioCallback {

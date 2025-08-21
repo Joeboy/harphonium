@@ -1,12 +1,12 @@
 // src-tauri/src/commands.rs
 // All Tauri command functions live here and are imported by both lib.rs and main.rs
 
-use crate::audio::{handle_audio_event, AudioEvent, AudioEventResult, Waveform};
+use crate::audio::{handle_audio_event, queue_audio_event, AudioEvent, AudioEventResult, Waveform};
 
 /// Play a note (piano mode)
 #[tauri::command]
 pub async fn play_note(frequency: f32) {
-    match handle_audio_event(AudioEvent::PlayNote { frequency }) {
+    match queue_audio_event(AudioEvent::PlayNote { frequency }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error handling audio event: {}", e);
@@ -17,10 +17,10 @@ pub async fn play_note(frequency: f32) {
     }
 }
 
-/// Set the frequency, for violin / fretless mode where
+/// Set the frequency, for violin / fretless mode
 #[tauri::command]
 pub async fn set_frequency(frequency: f32) {
-    match handle_audio_event(AudioEvent::SetFrequency { frequency }) {
+    match queue_audio_event(AudioEvent::SetFrequency { frequency }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error handling audio event: {}", e);
@@ -33,7 +33,7 @@ pub async fn set_frequency(frequency: f32) {
 
 #[tauri::command]
 pub async fn note_off() {
-    match handle_audio_event(AudioEvent::NoteOff) {
+    match queue_audio_event(AudioEvent::NoteOff) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error handling audio event: {}", e);
@@ -46,7 +46,7 @@ pub async fn note_off() {
 
 #[tauri::command]
 pub async fn set_master_volume(volume: f32) {
-    match handle_audio_event(AudioEvent::SetMasterVolume { volume }) {
+    match queue_audio_event(AudioEvent::SetMasterVolume { volume }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error handling audio event: {}", e);
@@ -75,7 +75,7 @@ pub async fn get_master_volume() -> f32 {
 
 #[tauri::command]
 pub async fn set_waveform(waveform: String) {
-    match handle_audio_event(AudioEvent::SetWaveform {
+    match queue_audio_event(AudioEvent::SetWaveform {
         waveform: Waveform::from_str(&waveform).unwrap(),
     }) {
         AudioEventResult::Ok => (),
@@ -105,7 +105,7 @@ pub async fn get_waveform() -> String {
 
 #[tauri::command]
 pub async fn set_attack(attack: f32) {
-    match handle_audio_event(AudioEvent::SetAttack { attack }) {
+    match queue_audio_event(AudioEvent::SetAttack { attack }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error setting attack: {}", e);
@@ -133,7 +133,7 @@ pub async fn get_attack() -> f32 {
 
 #[tauri::command]
 pub async fn set_decay(decay: f32) {
-    match handle_audio_event(AudioEvent::SetDecay { decay }) {
+    match queue_audio_event(AudioEvent::SetDecay { decay }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error setting decay: {}", e);
@@ -161,7 +161,7 @@ pub async fn get_decay() -> f32 {
 
 #[tauri::command]
 pub async fn set_sustain(sustain: f32) {
-    match handle_audio_event(AudioEvent::SetSustain { sustain }) {
+    match queue_audio_event(AudioEvent::SetSustain { sustain }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error setting sustain: {}", e);
@@ -189,7 +189,7 @@ pub async fn get_sustain() -> f32 {
 
 #[tauri::command]
 pub async fn set_release(release: f32) {
-    match handle_audio_event(AudioEvent::SetRelease { release }) {
+    match queue_audio_event(AudioEvent::SetRelease { release }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error setting release: {}", e);
@@ -217,7 +217,7 @@ pub async fn get_release() -> f32 {
 
 #[tauri::command]
 pub async fn set_delay_time(delay_time: f32) {
-    match handle_audio_event(AudioEvent::SetDelayTime { delay_time }) {
+    match queue_audio_event(AudioEvent::SetDelayTime { delay_time }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error setting delay time: {}", e);
@@ -245,7 +245,7 @@ pub async fn get_delay_time() -> f32 {
 
 #[tauri::command]
 pub async fn set_delay_feedback(delay_feedback: f32) {
-    match handle_audio_event(AudioEvent::SetDelayFeedback { delay_feedback }) {
+    match queue_audio_event(AudioEvent::SetDelayFeedback { delay_feedback }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error setting delay feedback: {}", e);
@@ -273,7 +273,7 @@ pub async fn get_delay_feedback() -> f32 {
 
 #[tauri::command]
 pub async fn set_delay_mix(delay_mix: f32) {
-    match handle_audio_event(AudioEvent::SetDelayMix { delay_mix }) {
+    match queue_audio_event(AudioEvent::SetDelayMix { delay_mix }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error setting delay mix: {}", e);
@@ -301,7 +301,7 @@ pub async fn get_delay_mix() -> f32 {
 
 #[tauri::command]
 pub async fn set_filter_cutoff(cutoff: f32) {
-    match handle_audio_event(AudioEvent::SetFilterCutoff { cutoff }) {
+    match queue_audio_event(AudioEvent::SetFilterCutoff { cutoff }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error setting filter cutoff: {}", e);
@@ -329,7 +329,7 @@ pub async fn get_filter_cutoff() -> f32 {
 
 #[tauri::command]
 pub async fn set_filter_resonance(resonance: f32) {
-    match handle_audio_event(AudioEvent::SetFilterResonance { resonance }) {
+    match queue_audio_event(AudioEvent::SetFilterResonance { resonance }) {
         AudioEventResult::Ok => (),
         AudioEventResult::Err(e) => {
             eprintln!("Error setting filter resonance: {}", e);
