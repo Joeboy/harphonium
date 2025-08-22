@@ -1,8 +1,8 @@
 /// Audio synthesis module using FunDSP
 use fundsp::buffer::{BufferArray, BufferRef};
 use fundsp::hacker::{
-    adsr_live, afollow, dcblock, delay, lowpass, pass, saw, shared, sine, split, square, triangle,
-    var, AudioUnit, Net, NodeId, MAX_BUFFER_SIZE, U1,
+    adsr_live, afollow, dcblock, delay, limiter, lowpass, pass, saw, shared, sine, split, square,
+    triangle, var, AudioUnit, Net, NodeId, MAX_BUFFER_SIZE, U1,
 };
 use rtrb::Consumer;
 use std::collections::HashMap;
@@ -221,6 +221,10 @@ impl FunDSPSynth {
         let oscillator_nodeid = net.push(current_waveform.create_oscillator());
         net.pipe_all(freq_smooth_id, oscillator_nodeid);
 
+        // Try to avoid clipping
+        let pad_volume_nodeid = net.push(Box::new(pass() * 0.5));
+        net.connect(oscillator_nodeid, 0, pad_volume_nodeid, 0);
+
         // ADSR stuff
         let key_down_nodeid = net.push(Box::new(var(&key_down_var)));
 
@@ -241,7 +245,7 @@ impl FunDSPSynth {
         let env_micro_id = net.push(Box::new(afollow(0.0005, 0.0005)));
         net.connect(adsr_nodeid, 0, env_micro_id, 0);
         let vca_nodeid = net.push(Box::new(pass() * pass()));
-        net.connect(oscillator_nodeid, 0, vca_nodeid, 0);
+        net.connect(pad_volume_nodeid, 0, vca_nodeid, 0);
         net.connect(env_micro_id, 0, vca_nodeid, 1);
 
         // Delay stuff
@@ -292,7 +296,10 @@ impl FunDSPSynth {
         let dcblock_id = net.push(Box::new(dcblock()));
         net.pipe_all(master_vol_nodeid, dcblock_id);
 
-        net.pipe_output(dcblock_id);
+        let limiter_id = net.push(Box::new(limiter(0.003, 0.050)));
+        net.pipe_all(dcblock_id, limiter_id);
+
+        net.pipe_output(limiter_id);
 
         let mut backend = net.backend();
         backend.set_sample_rate(sample_rate as f64);
